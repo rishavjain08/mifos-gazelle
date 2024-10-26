@@ -4,7 +4,6 @@
 # GLOBAL VARS
 ########################################################################
 BASE_DIR=$( cd $(dirname "$0") ; pwd )
-#BASE_DIR=$(pwd)
 APPS_DIR="$BASE_DIR/repos"
 CONFIG_DIR="$BASE_DIR/config"
 INFRA_NAMESPACE="infra"
@@ -21,7 +20,7 @@ VNEXT_REPO_LINK="https://github.com/mojaloop/platform-shared-tools.git"
 VNEXT_LAYER_DIRS=("$APPS_DIR/vnext/packages/installer/manifests/crosscut" "$APPS_DIR/vnext/packages/installer/manifests/ttk" "$APPS_DIR/vnext/packages/installer/manifests/apps" "$APPS_DIR/vnext/packages/installer/manifests/reporting")
 VNEXT_VALUES_FILE="$CONFIG_DIR/vnext_values.json"
 
-#paymenthubee
+#PaymentHub EE 
 PHBRANCH="master"
 PHREPO_DIR="phlabs"
 PH_NAMESPACE="paymenthub"
@@ -105,57 +104,6 @@ function replaceValuesInFiles() {
 function configurevNext() {
   replaceValuesInFiles "${VNEXT_LAYER_DIRS[0]}" "${VNEXT_LAYER_DIRS[2]}" "${VNEXT_LAYER_DIRS[3]}"
 }
-
-# function createSecret(){
-#   local namespace="$1"
-#   echo -e "Creating secrets in the $namespace namespace"
-#   if make secrets -e NAMESPACE="$namespace" >> /dev/null 2>&1 ; then
-#     echo -e "${GREEN}Created secrets in the $namespace namespace${RESET}"
-#     return 0
-#   else
-#     echo -e "${RED}Creating secrets in the $namespace namespace${RESET} failed"
-#     exit 1
-#   fi
-# }
-
-# function configurePH() {
-#   local ph_chart_dir=$1
-#   local previous_dir="$PWD"  # Save the current working directory
-#   echo -e "${BLUE}Configuring Payment Hub ${RESET}"
-
-#   cd $ph_chart_dir || exit 1
-
-#   # Check if make is installed
-#   if ! command -v make &> /dev/null; then
-#       logWithVerboseCheck $debug info "make is not installed. Installing ..."
-#       sudo apt update >> /dev/null 2>&1
-#       sudo apt install -y make >> /dev/null 2>&1
-#       logWithVerboseCheck $debug info "ok"
-#   else
-#       logWithVerboseCheck $debug info "make is installed. Proceeding to configure"
-#   fi
-#   # create secrets for paymenthub namespace and infra namespace
-#   cd es-secret || exit 1
-#   createSecret "$PH_NAMESPACE"
-#   createSecret "$INFRA_NAMESPACE"
-#   cd ..
-#   cd kibana-secret || exit 1
-#   createSecret "$PH_NAMESPACE"
-#   createSecret "$INFRA_NAMESPACE"
-#   cd ..
-#   # kubectl create secret generic moja-ph-redis --from-literal=redis-password="" -n "$PH_NAMESPACE"
-
-#   # check if the configuration was successful
-#   if [ $? -eq 0 ]; then
-#     echo -e "${GREEN}Configuration of Paymenthub Successful${RESET}"
-#   else
-#     echo -e "${RED}Configuration of Paymenthub Failed${RESET}"
-#     exit 1
-#   fi
-
-#   # Return to the previous working directory
-#   cd "$previous_dir" || return 1
-# }
 
 function configureMifosx(){
   echo -e "${BLUE}Configuring MifosX ${RESET}"

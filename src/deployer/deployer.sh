@@ -2,6 +2,7 @@
 
 # Function to check and handle command execution errors
 check_command_execution() {
+  local msg=$1
   if [ $? -ne 0 ]; then
     echo "Error: $1 failed"
     exit 1
@@ -71,6 +72,52 @@ function isDeployed {
     fi
 }
 
+deployBPMS() {
+  local host="https://zeebeops.mifos.gazelle.test/zeebe/upload"
+  local DEBUG=false
+  local bpms_to_deploy=38
+  local successful_uploads=0
+  local BPMNS_DIR="$APPS_DIR/$PHREPO_DIR"
+  printf "Deploying BPMN diagrams "
+  # Find each .bpmn file in the specified directories and iterate over them
+  for file in "$BPMNS_DIR/orchestration/feel/"*.bpmn "$BPMNS_DIR/orchestration/feel/example/"*.bpmn; do
+    # Check if the glob expanded to an actual file or just returned the pattern
+    if [ -f "$file" ]; then
+      # Construct and execute the curl command for each file
+      local cmd="curl --insecure --location --request POST $host \
+          --header 'Platform-TenantId: gorilla' \
+          --form 'file=@\"$file\"' \
+          -s -o /dev/null -w '%{http_code}'"
+
+      if [ "$DEBUG" = true ]; then
+          echo "Executing: $cmd"
+          http_code=$(eval "$cmd")
+          exit_code=$?
+          echo "HTTP Code: $http_code"
+          echo "Exit code: $exit_code"
+      else
+          http_code=$(eval "$cmd")
+          exit_code=$?
+
+          if [ "$exit_code" -eq 0 ] && [ "$http_code" -eq 200 ]; then
+              #echo "File: $file - Upload successful"
+              ((successful_uploads++))
+          fi
+      fi
+    else
+      echo " ** Warning : No BPMN files found in $file"  # Notify if no files are found in a location
+    fi
+  done
+
+  # Check if the number of successful uploads meets the required threshold
+  if [ "$successful_uploads" -ge "$bpms_to_deploy" ]; then
+    echo " [ok] "
+  else
+    echo "Warning: there was an issue deploying the BPMN diagrams."
+    echo "         run ./src/utils/deployBpmn-gazelle.sh to investigate"
+  fi
+}
+
 function createIngressSecret {
     local namespace="$1"
     local domain_name="$2"
@@ -78,7 +125,7 @@ function createIngressSecret {
     key_dir="$HOME/.ssh"
 
     # Generate private key
-    openssl genrsa -out "$key_dir/$domain_name.key" 2048
+    openssl genrsa -out "$key_dir/$domain_name.key" 2048 >> /dev/null 2>&1 
 
     # Generate self-signed certificate
     openssl req -x509 -new -nodes -key "$key_dir/$domain_name.key" -sha256 -days 365 -out "$key_dir/$domain_name.crt" -subj "/CN=$domain_name" -extensions v3_req -config <(
@@ -96,14 +143,19 @@ function createIngressSecret {
     [alt_names]
     DNS.1 = $domain_name
 EOF
-)
+) > /dev/null 2>&1 
     # Verify the certificate
-    openssl x509 -in "$key_dir/$domain_name.crt" -noout -text
+    openssl x509 -in "$key_dir/$domain_name.crt" -noout -text > /dev/null 2>&1 
 
     # Create the Kubernetes TLS secret
-    kubectl create secret tls "$secret_name" --cert="$key_dir/$domain_name.crt" --key="$key_dir/$domain_name.key" -n "$namespace"
+    kubectl create secret tls "$secret_name" --cert="$key_dir/$domain_name.crt" --key="$key_dir/$domain_name.key" -n "$namespace" > /dev/null 2>&1 
 
-    echo "Self-signed certificate and secret '$secret_name' created successfully in namespace '$namespace'."
+    if [ $? -eq 0 ]; then
+      echo "    Self-signed certificate and secret $secret_name created successfully in namespace $namespace "
+    else
+      echo " ** Error creating Self-signed certificate and secret $secret_name in namespace $namespace "
+      exit 1 
+    fi 
 } 
 
 function manageElasticSecrets {
@@ -116,7 +168,7 @@ function manageElasticSecrets {
     temp_dir=$(mktemp -d)
 
     if [[ "$action" == "create" ]]; then
-      echo "creating elastic and kibana secrets" 
+      echo "    creating elastic and kibana secrets in namespace $namespace" 
       # Convert the certificates and store them in the temporary directory
       openssl pkcs12 -nodes -passin pass:'' -in $certdir/elastic-certificates.p12 -out "$temp_dir/elastic-certificate.pem"  >> /dev/null 2>&1
       openssl x509 -outform der -in "$certdir/elastic-certificate.pem" -out "$temp_dir/elastic-certificate.crt"  >> /dev/null 2>&1
@@ -252,7 +304,7 @@ function deleteResourcesInNamespaceMatchingPattern() {
             fi
           fi
         else
-            printf "    Deleting all resources in namespace $namespace "
+            printf "Deleting all resources in namespace $namespace "
             kubectl delete all --all -n "$namespace" >> /dev/null 2>&1
             kubectl delete ns "$namespace" >> /dev/null 2>&1
             if [ $? -eq 0 ]; then
@@ -298,7 +350,6 @@ function deployHelmChartFromDir() {
 
   # tomd todo : is the chart really deployed ok, need a test
   # Use kubectl to get the resource count in the specified namespace
-  #resource_count=$(kubectl get pods -n "$namespace" --ignore-not-found=true 2>/dev/null | grep -v "No resources found" | wc -l)
   resource_count=$(sudo -u $k8s_user kubectl get pods -n "$namespace" --ignore-not-found=true 2>/dev/null | grep -v "No resources found" | wc -l)
   # Check if the deployment was successful
   if [ $resource_count -gt 0 ]; then
@@ -312,7 +363,6 @@ function deployHelmChartFromDir() {
 
 function preparePaymentHubChart(){
   # Clone the repositories
-  # 
   cloneRepo "$PHBRANCH" "$PH_REPO_LINK" "$APPS_DIR" "$PHREPO_DIR"  # needed for kibana and elastic secrets only 
   cloneRepo "$PH_EE_ENV_TEMPLATE_REPO_BRANCH" "$PH_EE_ENV_TEMPLATE_REPO_LINK" "$APPS_DIR" "$PH_EE_ENV_TEMPLATE_REPO_DIR"
 
@@ -356,10 +406,10 @@ function deployPhHelmChartFromDir(){
 
   # Install the Helm chart from the local directory
   if [ -z "$valuesFile" ]; then
-    echo "TDDEBUG NO values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace"
+    echo "default values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace"
     su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace" >> /dev/null 2>&1
   else
-    echo "TDDEBUG using values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile "
+    echo "    deploying using values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile "
     su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile "  >> /dev/null 2>&1
   fi
 
@@ -367,7 +417,7 @@ function deployPhHelmChartFromDir(){
   # TODO: should strengthen this check for deployment success 
   resource_count=$(kubectl get pods -n "$namespace" --ignore-not-found=true 2>/dev/null | grep -v "No resources found" | wc -l)
   if [ "$resource_count" -gt 0 ]; then
-    echo "Helm chart deployed successfully."
+    echo "PaymentHub EE Helm chart deployed successfully."
   else
     echo -e "${RED}Helm chart deployment failed.${RESET}"
     cleanUp
@@ -376,7 +426,6 @@ function deployPhHelmChartFromDir(){
 
 function deployPH(){
   if [[ "$(isDeployed "phee" )" == "true" ]]; then
-    echo "it is already deployed" 
     if [[ "$redeploy" == "false" ]]; then
       echo "$PH_RELEASE_NAME is already deployed. Skipping deployment."
       return
@@ -393,9 +442,12 @@ function deployPH(){
   manageElasticSecrets create "$PH_NAMESPACE" "$APPS_DIR/$PHREPO_DIR/helm/es-secret"
   manageElasticSecrets create "$INFRA_NAMESPACE" "$APPS_DIR/$PHREPO_DIR/helm/es-secret"
   createIngressSecret "$PH_NAMESPACE" "$GAZELLE_DOMAIN" sandbox-secret
-
-  #deployPhHelmChartFromDir "$PH_NAMESPACE" "$g2pSandboxFinalChartPath" "$PH_VALUES_FILE"
+  
+  # now deploy the helm chart 
   deployPhHelmChartFromDir "$PH_NAMESPACE" "$gazelleChartPath" "$PH_VALUES_FILE"
+  # now load the BPMS diagrams we do it here not in the helm chart so that 
+  # we can count the sucessful BPMN uploads and be confident that they are working 
+  deployBPMS
   echo -e "\n${GREEN}============================"
   echo -e "Paymenthub Deployed"
   echo -e "============================${RESET}\n"
@@ -451,8 +503,6 @@ function deployInfrastructure () {
   echo -e "Infrastructure Deployed"
   echo -e "============================${RESET}\n"
 }
-
-
 
 function applyKubeManifests() {
     if [ "$#" -ne 2 ]; then
@@ -585,7 +635,8 @@ function printEndMessage {
   echo -e "CHECK DEPLOYMENTS USING kubectl"
   echo -e "kubectl get pods -n vnext #For testing mojaloop vNext"
   echo -e "kubectl get pods -n paymenthub #For testing paymenthub"
-  echo -e "kubectl get pods -n mifosx #For testing MifosX x is a number of a MifosX instances\n\n"
+  echo -e "kubectl get pods -n mifosx #For testing MifosX x is a number of a MifosX instances"
+  echo -e "or install k9s by executing ./src/utils/install-k9s.sh <cr> in this terminal window\n\n"
 }
 
 function deleteApps {
