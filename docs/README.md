@@ -14,7 +14,8 @@
 - [Accessing Deployed Applications](#accessing-deployed-applications)
   - [Mojaloop vNext](#accessing-mojaloop-vnext)
   - [Payment Hub](#accessing-payment-hub)
-  - [Fineract](#accessing-fineract)
+  - [Fineract](#accessing-mifosx-fineract)
+- [Running helm test] (#helm-test)
 - [Development Status](#development-status)
 
 ## Goal of Mifos Gazelle
@@ -83,6 +84,9 @@ Remove deployed components:
 # Remove everything including Kubernetes server
 sudo ./run.sh -u $USER -m cleanall
 
+# Remove all applications from the kubernetes server  
+sudo ./run.sh -u $USER -m cleanapps
+
 # Remove specific components
 sudo ./run.sh -u $USER -m cleanapps -a mifosx  # Remove MifosX
 sudo ./run.sh -u $USER -m cleanapps -a phee    # Remove PaymentHub EE
@@ -95,7 +99,7 @@ sudo ./run.sh -u $USER -m cleanapps -a vnext   # Remove vNext switch
 
 #### Host Configuration
 
-Add the following entries to your hosts file on the laptop/desktop system where your web browser is running :
+Add the following entries to your hosts file on the laptop/desktop system where your web browser is running where <VM-IP> (without the angle brackets) is the IP of the server or VM where Mifos Gazelle has been deployed. 
 
 ```bash
 # Linux/MacOS (/etc/hosts)
@@ -127,7 +131,7 @@ Add the following entries to your hosts file on the laptop/desktop system where 
 <VM-IP> bulk-connector.mifos.gazelle.test
 ```
 
-### Accessing MifosX / Fineract
+### Accessing MifosX Fineract
 
 #### Host Configuration
 
@@ -140,10 +144,28 @@ Add the following entries to your hosts file on the laptop/desktop system where 
 <VM-IP> fineract.mifos.gazelle.test
 ```
 
+## Helm test
+helm tests are currently configured in the config/ph_values.yaml file , look for integration_tests. To execute the helm tests run 
+```bash
+helm test phee 
+```
+then examine the logfiles using either k9s or 
+```bash
+kubectl logs -n paymenthub ph-ee-integration-test-gazelle
+```
+you can access the results by copying them from the pod to the /tmp directory of the server machine or VM using the script below.  This will place the results into a directory similar to mydir.SzSauX i.e. of the form /tmp/mydir.XXXXXX. You will need to copy this directory from the server/VM to your desktop/laptop to browse the results , look for ths subdirectory of tests/test/index.html as the top level for your browser. Note that the pod will time-out after 90 mins and you will need to remove the ph-ee-integration-test-gazelle pod before running helm test phee again. 
+```bash
+~/mifos-gazelle/src/utils/copy-report-from-pod.sh 
+``` 
+
 ## Development Status
 Please note that limitations here are entirely those of the Mifos Gazelle configuration, and should not at all be interpreted as issues with the maturity or functionality of the deployed components.  
-- currently operations-web UI https://ops.mifos.gazelle.test can access batches and transfers and can create and send batches to bulk. It is not yet clear that the batches are bing correctly processed on the back end 
- 
+- currently operations-web UI https://ops.mifos.gazelle.test can access batches and transfers and can create and send batches to bulk. It is not yet clear that the batches are correctly processed on the back end, this of course is being worked on. 
+-  ph-ee-integration-test docker image on dockerhub uses the tag  v1.6.2-gazelle and corresponds to the v1.6.2-gazelle branch of the v1.6.2 integration-test repo.  The helm tests as deployed by Gazelle reports approx 90% pass rate. 
+- PaymentHub EE v 1.13.0 is being provisioned by Mifos Gazelle and this is set in the config.sh script prior to deployment. This document defines all the sub chart releases that comprise the v1.13.0 release https://mifos.gitbook.io/docs/payment-hub-ee/release-notes/v1.13.0
+- there is a lot of tidying up to do once this is better tested, e.g. debug statements to remove and lots of redundant env vars to remove as well as commented out code to remove. 
+- it should be straightforward to integrate the kubernetes operator work into this simplified single node deployment
+
 
 ### Known Issues
 - Single instance deployment currently supported
