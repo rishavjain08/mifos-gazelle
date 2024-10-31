@@ -563,8 +563,107 @@ function addKubeConfig(){
   su - $k8s_user -c "cp $k8s_user_home/k3s.yaml $K8sConfigDir/config"
 }
 
+function vnext_restore_demo_data {
+  local mongo_data_dir=$1
+  #echo $mongo_data_dir 
+  local namespace=$2 
+  printf "    restoring vNext mongodb demonstration/test data "
+  mongopod=`kubectl get pods --namespace $namespace | grep -i mongodb |awk '{print $1}'` 
+  mongo_root_pw=`kubectl get secret --namespace $namespace  mongodb  -o jsonpath='{.data.mongodb-root-password}'| base64 -d` 
+  kubectl cp  $mongo_data_dir/mongodump-beta.gz $mongopod:/tmp/mongodump.gz  --namespace $namespace >/dev/null 2>&1 # copy the demo / test data into the mongodb pod
+  kubectl exec --namespace $namespace --stdin --tty  $mongopod -- mongorestore  -u root -p $mongo_root_pw \
+               --gzip --archive=/tmp/mongodump.gz --authenticationDatabase admin  >/dev/null 2>&1  
+  printf " [ ok ] \n"
+}
+
+# function vnext_configure_ttk { 
+#   local ttk_files_dir=$1
+#   local namespace=$2 
+#   printf "\n==> configuring the testing toolkit  \n "
+#   bb_pod_status=`kubectl get pods bluebank-backend-0 --namespace $namespace  --no-headers 2>/dev/null | awk '{print $3}' `
+#   if [[ "$bb_pod_status" == "Running" ]]; then
+#     printf "   testing toolkit data and environment config " 
+#     ####   bluebank  ###
+#     ttk_pod_env_dest="/opt/app/examples/environments"
+#     ttk_pod_spec_dest="/opt/app/spec_files"
+#     kubectl cp $ttk_files_dir/environment/hub_local_environment.json bluebank-backend-0:$ttk_pod_env_dest/hub_local_environment.json --namespace $namespace
+#     kubectl cp $ttk_files_dir/environment/dfsp_local_environment.json bluebank-backend-0:$ttk_pod_env_dest/dfsp_local_environment.json --namespace $namespace
+#     kubectl cp $ttk_files_dir/spec_files/user_config_bluebank.json bluebank-backend-0:$ttk_pod_spec_dest/user_config.json --namespace $namespace
+#     kubectl cp $ttk_files_dir/spec_files/default.json bluebank-backend-0:$ttk_pod_spec_dest/rules_callback/default.json --namespace $namespace
+
+#     ####  greenbank  ###
+#     kubectl cp $ttk_files_dir/environment/hub_local_environment.json greenbank-backend-0:$ttk_pod_env_dest/hub_local_environment.json --namespace $namespace
+#     kubectl cp $ttk_files_dir/environment/dfsp_local_environment.json greenbank-backend-0:$ttk_pod_env_dest/dfsp_local_environment.json --namespace $namespace
+#     kubectl cp $ttk_files_dir/spec_files/user_config_greenbank.json greenbank-backend-0:$ttk_pod_spec_dest/user_config.json --namespace $namespace
+#     kubectl cp $ttk_files_dir/spec_files/default.json greenbank-backend-0:$ttk_pod_spec_dest/rules_callback/default.json --namespace $namespace
+
+#     if [[ ! $WARNING_IS_CURRENT == true ]]; then
+#       printf " [ ok ] \n"
+#     fi
+#   else 
+#     printf "    - ttk does not seem to be running so skipping TTK data and environment config (ttk does not yet run on arm64 from repo )\n" 
+#   fi 
+#   WARNING_IS_CURRENT=false  #clear current warning 
+# }
+
+function vnext_configure_ttk {
+  local ttk_files_dir=$1
+  local namespace=$2
+  local warning_issued=false
+  printf "\n==> Configuring the Testing Toolkit... "
+
+  # Check if BlueBank pod is running
+  local bb_pod_status
+  bb_pod_status=$(kubectl get pods bluebank-backend-0 --namespace "$namespace" --no-headers 2>/dev/null | awk '{print $3}')
+  
+  if [[ "$bb_pod_status" != "Running" ]]; then
+    printf "    - TTK pod is not running; skipping configuration (may not support arm64).\n"
+    return 0
+  fi
+  
+  #printf "    Configuring TTK data and environment...\n"
+  
+  # Define TTK pod destinations
+  local ttk_pod_env_dest="/opt/app/examples/environments"
+  local ttk_pod_spec_dest="/opt/app/spec_files"
+  
+  # Function to check and report on kubectl cp command success
+  check_kubectl_cp() {
+    if ! kubectl cp "$1" "$2" --namespace "$namespace" 2>/dev/null; then
+      printf "    [WARNING] Failed to copy %s to %s\n" "$1" "$2"
+      warning_issued=true
+    fi
+  }
+  
+  # Copy BlueBank files
+  check_kubectl_cp "$ttk_files_dir/environment/hub_local_environment.json" "bluebank-backend-0:$ttk_pod_env_dest/hub_local_environment.json"
+  check_kubectl_cp "$ttk_files_dir/environment/dfsp_local_environment.json" "bluebank-backend-0:$ttk_pod_env_dest/dfsp_local_environment.json"
+  check_kubectl_cp "$ttk_files_dir/spec_files/user_config_bluebank.json" "bluebank-backend-0:$ttk_pod_spec_dest/user_config.json"
+  check_kubectl_cp "$ttk_files_dir/spec_files/default.json" "bluebank-backend-0:$ttk_pod_spec_dest/rules_callback/default.json"
+  
+  # Copy GreenBank files
+  check_kubectl_cp "$ttk_files_dir/environment/hub_local_environment.json" "greenbank-backend-0:$ttk_pod_env_dest/hub_local_environment.json"
+  check_kubectl_cp "$ttk_files_dir/environment/dfsp_local_environment.json" "greenbank-backend-0:$ttk_pod_env_dest/dfsp_local_environment.json"
+  check_kubectl_cp "$ttk_files_dir/spec_files/user_config_greenbank.json" "greenbank-backend-0:$ttk_pod_spec_dest/user_config.json"
+  check_kubectl_cp "$ttk_files_dir/spec_files/default.json" "greenbank-backend-0:$ttk_pod_spec_dest/rules_callback/default.json"
+
+  # Final status message
+  if [[ "$warning_issued" == false ]]; then
+    printf "    [ ok ] \n"
+  else
+    printf "    [ WARNING ] Some files failed to copy. Check warnings above.\n"
+  fi
+}
+
+
 function deployvNext() {
-  echo "==> Deploying Mojaloop vNext application "
+  printf "\n==> Deploying Mojaloop vNext application \n"
+  # echo "INFRA NS is $INFRA_NAMESPACE"
+  # echo "MOGOD IMPORT DIR is $MONGO_DATA_DIR"
+  #vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
+  #vnext_configure_ttk $VNEXT_TTK_FILES_DIR $VNEXT_NAMESPACE
+  #exit 
+
   if [[ "$(isDeployed "vnext" )" == "true" ]]; then
     if [[ "$redeploy" == "false" ]]; then
       echo "    vNext application is already deployed. Skipping deployment."
@@ -575,18 +674,20 @@ function deployvNext() {
   fi 
   createNamespace "$VNEXT_NAMESPACE"
   cloneRepo "$VNEXTBRANCH" "$VNEXT_REPO_LINK" "$APPS_DIR" "$VNEXTREPO_DIR"
-  configurevNext
+  configurevNext  # make any local mods to manifests
+  vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
 
   for index in "${!VNEXT_LAYER_DIRS[@]}"; do
     folder="${VNEXT_LAYER_DIRS[index]}"
     #echo "Deploying files in $folder"
     applyKubeManifests "$folder" "$VNEXT_NAMESPACE" >/dev/null 2>&1
     if [ "$index" -eq 0 ]; then
-      echo -e "${BLUE}Waiting for vnext cross cutting concerns to come up${RESET}"
+      echo -e "${BLUE}    Waiting for vnext cross cutting concerns to come up${RESET}"
       sleep 10
-      echo -e "Proceeding ..."
+      echo -e "    Proceeding ..."
     fi
   done
+  vnext_configure_ttk $VNEXT_TTK_FILES_DIR  $VNEXT_NAMESPACE   # configure in the TTKs as participants 
 
   echo -e "\n${GREEN}============================"
   echo -e "vnext Deployed"

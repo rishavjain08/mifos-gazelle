@@ -104,7 +104,7 @@ Add the following entries to your hosts file on the laptop/desktop system where 
 ```bash
 # Linux/MacOS (/etc/hosts)
 <VM-IP>  vnextadmin elasticsearch.local kibana.local mongoexpress.local \
-         kafkaconsole.local fspiop.local bluebank.local greenbank.local mifos.local
+         kafkaconsole.local fspiop.local bluebank.local greenbank.local 
 
 # Windows (C:\Windows\System32\drivers\etc\hosts)
 <VM-IP> vnextadmin.local

@@ -1,24 +1,36 @@
-# NEEDS UPDATING FOR MIFOS-GAZELLE 
+# Mifos Gazelle 
+[![Mifos](https://img.shields.io/badge/Mifos-Gazelle-blue)](https://github.com/openMF/mifos-gazelle)
+> Deployment utilities for Mifos/Fineract, Payment Hub EE, and Mojaloop vNext (as of October 2024)
 
-
-# A Deployable Package for Mifos/Fineract, Payment Hub EE, and Mojaloop (Mifos-gazelle)
-
-## Introduction
-
-The deployable package is intended to simplify and automate the deployment process of three software applications, namely Mojaloop, PaymentHub, and Fineract, onto a Kubernetes cluster. This package aims to streamline the deployment process, reduce manual errors, and enable someone to demo how these softwares can work together. 
-
-## SETTING THINGS UP
-We maintain an in-detailed documentation on how to get started with Mifos-Gazelle. You can find them under the [/docs](./docs) directory
-
-## CONTRIBUTION
-
-Find the contributing guidelines [here](./CONTRIBUTING.md)
-
-## CONCLUSION
-
-This tool is intended to simplify the deployment process for Payment Hub EE, Mojaloop and Fineract for testing purposes.
+## Quick Links
+- [Mifos Gazelle README](docs/MIFOS-GAZELLE-README.md) - Deploy and run Mifos and vNext 
+- [Postman Testing](docs/POSTMAN.md) - Running Postman collections 
+- [vNext README](docs/VNEXT-README.md) - deploy and runing vNext on its own
 
 
 
+## Overview
+This repository contains the Mifos Gazelle deployment utilities
+
+## Getting Started
+1. Review the [Mifos Gazelle README](docs/MIFOS-GAZELLE-README.md) for detailed installation instructions
+2. Follow the prerequisites and system requirements
+3. Execute the installation steps
+
+## Repository Structure  (wip) 
+```
+platform-shared-tools/
+├── README.md
+├── docs/
+│   ├── MIFOS-GAZELLE-README.md
+│   ├── POSTMAN.md 
+│   └── VNEXT-README.md
+└── src/
+
+```
+
+## Additional Resources
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [License Information](LICENSE.md)
 
 

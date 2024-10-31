@@ -148,10 +148,10 @@ function install_prerequisites {
 
 function add_hosts {
     printf "==> Mifos-gazelle : update hosts file \n"
-    VNEXTHOSTS=( mongohost.local mongo-express.local \
-                 vnextadmin elasticsearch.local redpanda-console.local \
-                 fspiop.local bluebank.local greenbank.local \
-                 bluebank-specapi.local greenbank-specapi.local ) 
+    VNEXTHOSTS=( mongohost.mifos.gazelle.test mongo-express.mifos.gazelle.test \
+                 vnextadmin elasticsearch.mifos.gazelle.test redpanda-console.mifos.gazelle.test \
+                 fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test \
+                 bluebank-specapi.mifos.gazelle.test greenbank-specapi.mifos.gazelle.test ) 
 
     PHEEHOSTS=(  ops.mifos.gazelle.test ops-bk.mifos.gazelle.test \
                  bulk-connector.mifos.gazelle.test messagegateway.mifos.gazelle.test \
@@ -175,7 +175,7 @@ function add_hosts {
     perl -p -i.bak -e 's/127\.0\.0\.1.*localhost.*$/$ENV{ENDPOINTS} /' /etc/hosts
     # TODO check the ping actually works > suggest cloud network rules if it doesn't
     #      also for cloud VMs might need to use something other than curl e.g. netcat ?
-    # ping  -c 2 account-lookup-service-admin.local
+    # ping  -c 2 account-lookup-service-admin.mifos.gazelle.test
 }
 
 function set_k8s_distro {
