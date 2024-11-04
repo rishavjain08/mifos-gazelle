@@ -4,6 +4,7 @@ ph-ee-engine:
   #   tenants: "rhino,gorilla,wakanda,pluto,venus,jupiter"
   #   DFSPIDS: "wakanda,pluto,venus,jupiter,gorilla"
 
+
   elasticsearch:
     esJavaOpts: "-Xms512m -Xmx512m"
     resources:
@@ -206,9 +207,14 @@ ph-ee-engine:
       className: nginx
 
   ph_ee_connector_ams_mifos:
-      ingress:
-        enabled: true
-        className: nginx
+    ams_local_enabled: true
+    ams_local_interop_host: "http://fineract-server.mifosx-1.svc.cluster.local/"
+    ams_local_account_host: "http://fineract-server.mifosx-1.svc.cluster.local/"
+    ams_local_customer_host: "http://fineract-server.mifosx-1.svc.cluster.local/"
+    ams_local_auth_host: "http://fineract-server.mifosx-1.svc.cluster.local/"
+    ingress:
+      enabled: true
+      className: nginx
 
 
   # Mockpayment
@@ -325,6 +331,21 @@ ph-ee-engine:
       enabled: true
       className: nginx
 
+  post_installation_job:
+    enabled: false
+
+  integration_test:
+    enableAMSTest: false
+    enableGOVTest: false
+    enableGazelleTest: true 
+    imagePullPolicy: IfNotPresent
+    image: docker.io/openmf/ph-ee-integration-test:v1.6.2-gazelle
+    imagePullPolicy: IfNotPresent
+    testTags: "@gov and not @ext"
+    memoryRequest: "500k"
+    testResultsOutputDir: "/tmp"
+
+
 # Account Mapper
 account_mapper:
   enabled: true
@@ -345,7 +366,6 @@ account_mapper:
     #             port:
     #               number: 80
 
-  post_installation_job:
-    enabled: false
+
 
 

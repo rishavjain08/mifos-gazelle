@@ -19,6 +19,9 @@ VNEXT_NAMESPACE="vnext"
 VNEXT_REPO_LINK="https://github.com/mojaloop/platform-shared-tools.git"
 VNEXT_LAYER_DIRS=("$APPS_DIR/vnext/packages/installer/manifests/crosscut" "$APPS_DIR/vnext/packages/installer/manifests/ttk" "$APPS_DIR/vnext/packages/installer/manifests/apps" "$APPS_DIR/vnext/packages/installer/manifests/reporting")
 VNEXT_VALUES_FILE="$CONFIG_DIR/vnext_values.json"
+VNEXT_MONGODB_DATA_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files/mongodb"
+VNEXT_TTK_FILES_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files"
+
 
 #PaymentHub EE 
 PHBRANCH="master"
@@ -103,6 +106,19 @@ function replaceValuesInFiles() {
 
 function configurevNext() {
   replaceValuesInFiles "${VNEXT_LAYER_DIRS[0]}" "${VNEXT_LAYER_DIRS[2]}" "${VNEXT_LAYER_DIRS[3]}"
+  # Iterate over each directory in VNEXT_LAYER_DIRS
+  for dir in "${VNEXT_LAYER_DIRS[@]}"; do
+    # Find all YAML files in the directory
+    find "$dir" -type f -name "*.yaml" | while read -r file; do
+      # Perform the in-place substitution for ingressClassName
+      perl -pi -e 's/ingressClassName:\s*nginx-ext/ingressClassName: nginx/' "$file"
+      
+      # Perform the in-place substitution for domain name .local to mifos.gazelle.test
+      perl -pi -e 's/- host:\s*(\S+)\.local/- host: $1.mifos.gazelle.test/' "$file"
+      perl -pi -e 's/(\S+)bank\.local/$1bank.mifos.gazelle.test/' "$file"
+
+    done
+  done
 }
 
 function configureMifosx(){

@@ -97,7 +97,7 @@ redpanda-console:
     enabled: true
     className: nginx
     hosts:
-      - host: redpanda-console.local
+      - host: redpanda-console.mifos.gazelle.test
         paths:
           - path: /
             pathType: ImplementationSpecific
@@ -140,7 +140,7 @@ mongo-express:
     enabled: true
     ingressClassName: nginx
     hosts:
-      - host: mongoexpress.local
+      - host: mongoexpress.mifos.gazelle.test
         paths:
           - /
 

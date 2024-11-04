@@ -1,0 +1,4 @@
+Request,CreditParty Key,CreditParty Value,DebitParty Key,DebitParty Value,SubType,Payment Mode,Currency,Amount,Description
+8.7988E+11,msisdn,837461856,accountnumber,3.001E+15,,mojaloop,USD,500,test1
+8.7988E+11,msisdn,837461856,accountnumber,3.001E+15,,mojaloop,USD,501,test2
+8.7988E+11,msisdn,837461856,accountnumber,3.001E+15,,mojaloop,USD,502,test3

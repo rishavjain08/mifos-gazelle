@@ -1,11 +1,11 @@
 #!/usr/bin/env bash 
 
-SRC=$HOME/debug/integration/ph-ee-integration-test
+#SRC=$HOME/debug/integration/ph-ee-integration-test
 DEST="/ph-ee-connector-integration-test" 
-POD=tomtest 
+POD="ph-ee-integration-test-gazelle"
 
 # Create a unique directory in /tmp
-unique_dir=$(mktemp -d $HOME/tmp/mydir.XXXXXX)
+unique_dir=$(mktemp -d /tmp/mydir.XXXXXX)
 echo "savings reports to $unique_dir"
 
 # copy reports from pod 
