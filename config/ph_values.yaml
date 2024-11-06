@@ -367,5 +367,16 @@ account_mapper:
     #               number: 80
 
 
-
-
+  # camunda-platform:  
+  #   webModeler:
+  #     enabled: true
+  #     restapi:
+  #       mail:
+  #         smtpHost: smtp.example.com
+  #         smtpPort: 587
+  #         smtpUser: mifosu
+  #         smtpPassword: secret
+  #         # Email address to be displayed as sender of emails from Web Modeler
+  #         fromAddress: no-reply@example.com
+  #   postgresql:
+  #     enabled: true

@@ -365,7 +365,7 @@ function install_nginx () {
             printf "[ok]\n"
         else # i.e. k3s 
             su - $k8s_user -c "helm delete ingress-nginx -n default " > /dev/null 2>&1
-            su - $k8s_user -c "helm install --wait --timeout 300s ingress-nginx ingress-nginx \
+            su - $k8s_user -c "helm install --wait --timeout 1200s ingress-nginx ingress-nginx \
                               --repo https://kubernetes.github.io/ingress-nginx \
                               -n default -f $NGINX_VALUES_FILE" > /dev/null 2>&1
             # Check if the Nginx pod is running
