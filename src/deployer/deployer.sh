@@ -777,6 +777,9 @@ function deployApps {
   appsToDeploy="$2"
   redeploy="$3"
 
+  echo "redeploy is $redeploy"
+
+
   if [[ "$appsToDeploy" == "all" ]]; then
     echo -e "${BLUE}Deploying all apps ...${RESET}"
     deployInfrastructure "$redeploy" 
@@ -789,8 +792,21 @@ function deployApps {
     deployInfrastructure "false"
     deployvNext
   elif [[ "$appsToDeploy" == "mifosx" ]]; then 
+    if [[ "$redeploy" == "true" ]]; then 
+      echo "removing current mifosx and redeploying"
+      deleteApps 1 "mifosx"
+    fi 
     deployInfrastructure "false"
     DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"  "$MIFOSX_num_instances"
+    # here we need to add the second tenant to the mysql database 
+    # this is how to check to see how many rows are in a schema 
+    # can use this to determine when mifos has finished creating tables 
+    # 249 seems to be the magic number for fineract_default schema 
+    # kubectl run mysql-client --rm -it --image=mysql:5.6 --restart=Never -- mysql -h mysql.infra.svc.cluster.local -u root -pmysqlpw \
+    # -B -e 'SELECT count(*) AS TOTALNUMBEROFTABLES FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "fineract_default" '
+    kubectl -n $INFRA_NAMESPACE cp $CONFIG_DIR/mifos-multi-tenant.sql mysql-0:/tmp
+    kubectl -n $INFRA_NAMESPACE exec  mysql-0 
+
   elif [[ "$appsToDeploy" == "phee" ]]; then
     deployPH
   else 
