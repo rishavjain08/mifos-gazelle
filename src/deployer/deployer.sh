@@ -800,7 +800,7 @@ function deployApps {
     # here we need to add the second tenant to the mysql database 
     # this is how to check to see how many rows are in a schema 
     # can use this to determine when mifos has finished creating tables 
-    # 249 seems to be the magic number for fineract_default schema 
+    # 249 seems to be the magic number for fineract_default schema for openmf/fineract:develop 
     # kubectl run mysql-client --rm -it --image=mysql:5.6 --restart=Never -- mysql -h mysql.infra.svc.cluster.local -u root -pmysqlpw \
     # -B -e 'SELECT count(*) AS TOTALNUMBEROFTABLES FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "fineract_default" '
     kubectl -n $INFRA_NAMESPACE cp $CONFIG_DIR/mifos-multi-tenant.sql mysql-0:/tmp

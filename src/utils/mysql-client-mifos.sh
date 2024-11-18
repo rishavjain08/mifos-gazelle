@@ -1,6 +1,6 @@
 #!/usr/bin/env bash 
-# small utility to help remember how to 
-#    run msql-client and connect to mysql inside cluster 
+# small utility  to 
+#    run mysql-client in k8s and connect to mysql inside cluster 
 # 
 
 # MySQL connection credentials

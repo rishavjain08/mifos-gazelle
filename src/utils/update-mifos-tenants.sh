@@ -1,4 +1,14 @@
 #!/bin/bash
+# automate and document how to setup new tenants to the mifos/fineract 
+# T Daly , Nov 2024
+# Notes: 
+#   #1 this script relies on the fineract-server to be up and running 
+#      see: @fineract GitHub repo under doc  https://github.com/openMF/fineract/blob/develop/fineract-doc/src/docs/en/chapters/architecture/persistence.adoc 
+#   #2 currently it also relies on the docker image openMF/fineract-server:develop as this image has a version of the 
+#      org.apache.fineract.infrastructure.core.service.database.DatabasePasswordEncryptor which prints the encrypted password for 
+#      both the plain text password as specified in the .csv as db_password field as well as the master password hash 
+#        
+
 
 # Default settings
 MYSQL_USER="root"
@@ -10,6 +20,7 @@ FINERACT_DEFAULT_TENANTDB_MASTER_PASSWORD="fineract"
 NAMESPACE="mifosx-1"
 CONFIG_FILE=""
 SKIP_CONFIRM=0
+SILENT_MODE=false
 
 # Declare tenant storage
 TENANTS=() 
@@ -28,6 +39,7 @@ Options:
     -n, --namespace          Kubernetes namespace (default: $NAMESPACE)
     -m, --master-password    Fineract master password (default: $FINERACT_DEFAULT_TENANTDB_MASTER_PASSWORD)
     -f, --config-file        Path to tenant configuration file (required)
+    -s, --silent             silent mode 
     -y, --yes                Skip confirmation prompt
     --help                   Show this help message
 
@@ -40,16 +52,8 @@ Examples:
 2,gazelle1,"Tenant for Gazelle",Australia/Adelaide,mysql.host,3306,gazelle1_user,gazelle1_db,gazelle1_pw
 3,gazelle2,"Second Tenant",UTC,mysql.host,3306,gazelle2_user,gazelle2_db,gazelle2_pw
 
-- tenant_id: Unique numeric identifier for the tenant
-- tenant_identifier: Unique string identifier for the tenant
-- tenant_name: Human-readable name of the tenant (quoted if it contains spaces)
-- tenant_timezone: Timezone for the tenant (e.g., UTC, Australia/Adelaide)
-- db_host: Database host for the tenant's schema
-- db_port: Port number for the tenant's database connection
-- db_name: Name of the tenant's database/schema
-- db_user: Username for connecting to the tenant's database
-- db_password: Password for the tenant's database user
 EOF
+exit 1 
 }
 
 validate_tenant_config() {
@@ -57,8 +61,8 @@ validate_tenant_config() {
     local id identifier name timezone db_host db_port db_name db_user db_pass
     IFS=',' read -r id identifier name timezone db_host db_port db_name db_user db_pass <<< "$line"
 
-    echo "Validating line: $line"
-    echo "Fields: ID=$id, Identifier=$identifier, Name=$name, Timezone=$timezone, Host=$db_host, Port=$db_port, DB=$db_name, User=$db_user, Password=$db_pass"
+    # echo "Validating line: $line"
+    # echo "Fields: ID=$id, Identifier=$identifier, Name=$name, Timezone=$timezone, Host=$db_host, Port=$db_port, DB=$db_name, User=$db_user, Password=$db_pass"
 
     # Check required fields
     if [ -z "$id" ]; then
@@ -107,7 +111,7 @@ read_tenant_configs() {
         # Skip empty lines and comments
         [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
 
-        echo "Processing line: $line" # Debugging output
+        log "Processing line: $line" # Debugging output
 
         if validate_tenant_config "$line"; then
             TENANTS+=("$line") # Append the line to the array
@@ -116,39 +120,52 @@ read_tenant_configs() {
         fi
     done < "$config_file"
 
-    echo "Total tenants processed: ${#TENANTS[@]}" # Debugging output
+    log "Total tenants processed: ${#TENANTS[@]}" # Debugging output
 }
-
-
-
-
-# Get encrypted passwords
 get_encrypted_passwords() {
     local db_password="$1"
     local master_password="$2"
+    echo "getting passwords"
 
-    local fineract_pod
-    fineract_pod=$(kubectl get pods -n "$NAMESPACE" --no-headers | grep ^fineract-server | awk '{print $1}' | head -1)
-
-    if [[ -z "$fineract_pod" ]]; then
-        echo "Error: No Fineract server pod found in namespace $NAMESPACE"
-        exit 1
-    fi
-
-    local output
-    output=$(kubectl exec -n "$NAMESPACE" "$fineract_pod" -- java -cp @/app/jib-classpath-file \
-        org.apache.fineract.infrastructure.core.service.database.DatabasePasswordEncryptor \
-        "$master_password" "$db_password")
-
-    # Extract encrypted passwords directly
-    local db_password_hash
-    local master_password_hash
-    db_password_hash=$(echo "$output" | awk -F': ' '/The encrypted password:/ {print $2}')
-    master_password_hash=$(echo "$output" | awk -F': ' '/The master password hash is:/ {print $2}')
-
-    # Return hashes in the expected format
-    echo "$db_password_hash:$master_password_hash"
 }
+
+# Get encrypted passwords
+# get_encrypted_passwords() {
+#     echo "got here ok"
+#     local db_password="$1"
+#     local master_password="$2"
+
+#     echo "got here ok"
+#     local fineract_pod
+#     fineract_pod=$(kubectl get pods -n "$NAMESPACE" --no-headers | grep ^fineract-server | awk '{print $1}' | head -1)
+#     run_state=$(kubectl get pod "$fineract_pod" -n "$NAMESPACE" --no-headers | grep fineract | awk '{print $3}' ) 
+
+#     echo "is server up. $run_state" 
+
+#     if [[ -z "$fineract_pod" ]]; then
+#         echo "Error: No Fineract server pod found in namespace $NAMESPACE"
+#         exit 1
+#     fi
+
+#     if [[ $run_state != "Running" ]]; then 
+#         echo "Error: Fineract server pod in namespace $NAMESPACE is not Running"
+#         exit 1
+#     fi 
+
+#     local output
+#     output=$(kubectl exec -n "$NAMESPACE" "$fineract_pod" -- java -cp @/app/jib-classpath-file \
+#         org.apache.fineract.infrastructure.core.service.database.DatabasePasswordEncryptor \
+#         "$master_password" "$db_password")
+
+#     # Extract encrypted passwords directly
+#     local db_password_hash
+#     local master_password_hash
+#     db_password_hash=$(echo "$output" | awk -F': ' '/The encrypted password:/ {print $2}')
+#     master_password_hash=$(echo "$output" | awk -F': ' '/The master password hash is:/ {print $2}')
+
+#     # Return hashes in the expected format
+#     echo "$db_password_hash:$master_password_hash"
+# }
 
 
 generate_tenant_sql() {
@@ -157,10 +174,14 @@ generate_tenant_sql() {
 
     for tenant in "${TENANTS[@]}"; do
         IFS=',' read -r id identifier name timezone db_host db_port db_name db_user db_pass <<< "$tenant"
-        echo "Parsed fields: ID=$id, Identifier=$identifier, Name=$name, Timezone=$timezone, Host=$db_host, Port=$db_port, DB=$db_name, User=$db_user, Password=$db_pass" # Debugging
+        #echo "Parsed fields: ID=$id, Identifier=$identifier, Name=$name, Timezone=$timezone, Host=$db_host, Port=$db_port, DB=$db_name, User=$db_user, Password=$db_pass" # Debugging
 
         local encrypted_passwords
+        echo "about to call get passwords" 
+        set -x 
         encrypted_passwords=$(get_encrypted_passwords "$db_pass" "$FINERACT_DEFAULT_TENANTDB_MASTER_PASSWORD")
+        set +x 
+        echo "after the call get passwords" 
         local db_password_hash master_password_hash
         IFS=':' read -r db_password_hash master_password_hash <<< "$encrypted_passwords"
 
@@ -184,22 +205,43 @@ EOF
     done
 }
 
-
 # Execute SQL
 execute_sql() {
     local sql_file="$1"
-    kubectl run gazelle-mysql-client --rm -i --image="$MYSQL_IMAGE" --restart=Never -- \
-        mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < "$sql_file" && {
+
+    if [[ "$SILENT_MODE" == true ]]; then
+        kubectl run gazelle-mysql-client --rm -i --image="$MYSQL_IMAGE" --restart=Never -- \
+            mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < "$sql_file" >/dev/null 2>&1
+    else 
+        kubectl run gazelle-mysql-client --rm -i --image="$MYSQL_IMAGE" --restart=Never -- \
+            mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < "$sql_file"  && {
         echo "SQL executed successfully."
-    } || {
+        } || {
         echo "SQL execution failed."
         exit 1
-    }
+        }   
+    fi 
+}
+
+log() {
+    if [[ "$SILENT_MODE" == false ]]; then
+        echo "$1"
+    fi
+}
+
+confirm_execution() {
+    if [[ "$SILENT_MODE" == false ]]; then
+        read -rp "Proceed with SQL execution? (y/n): " confirm
+        if [[ "$confirm" != "y" ]]; then
+            log "Aborting."
+            exit 1
+        fi
+    fi
 }
 
 # Parse options
 while [[ $# -gt 0 ]]; do
-    case $1 in
+    case "$1" in
         -u|--mysql-user) MYSQL_USER="$2"; shift ;;
         -p|--mysql-password) MYSQL_PASSWORD="$2"; shift ;;
         -h|--mysql-host) MYSQL_HOST="$2"; shift ;;
@@ -207,22 +249,28 @@ while [[ $# -gt 0 ]]; do
         -i|--mysql-image) MYSQL_IMAGE="$2"; shift ;;
         -n|--namespace) NAMESPACE="$2"; shift ;;
         -m|--master-password) FINERACT_DEFAULT_TENANTDB_MASTER_PASSWORD="$2"; shift ;;
-        -f|--config-file) CONFIG_FILE="$2"; shift ;;
+        -s|--silent) SILENT_MODE=true ;;
         -y|--yes) SKIP_CONFIRM=1 ;;
+        -f|--config-file) CONFIG_FILE="$2"; shift ;;
         --help) usage; exit 0 ;;
         *) echo "Unknown option: $1"; usage; exit 1 ;;
     esac
     shift
 done
 
+
+echo "SILENT_MODE is $SILENT_MODE"
+
+
 [[ -z "$CONFIG_FILE" ]] && { echo "Error: Configuration file is required."; usage; exit 1; }
 
-# Main execution
+###### Main execution ######
 read_tenant_configs "$CONFIG_FILE"
 generate_tenant_sql
+confirm_execution
 
-if [[ $SKIP_CONFIRM -eq 1 ]] || read -rp "Proceed with SQL execution? (y/n): " confirm && [[ $confirm =~ ^[Yy]$ ]]; then
-    execute_sql "/tmp/tenant_setup.sql"
-else
-    echo "Operation cancelled."
-fi
+# if [[ $SKIP_CONFIRM -eq 1 ]] || read -rp "Proceed with SQL execution? (y/n): " confirm && [[ $confirm =~ ^[Yy]$ ]]; then
+#     execute_sql "/tmp/tenant_setup.sql"
+# else
+#     echo "Operation cancelled."
+# fi
