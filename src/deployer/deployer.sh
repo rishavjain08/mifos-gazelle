@@ -779,7 +779,6 @@ function deployApps {
 
   echo "redeploy is $redeploy"
 
-
   if [[ "$appsToDeploy" == "all" ]]; then
     echo -e "${BLUE}Deploying all apps ...${RESET}"
     deployInfrastructure "$redeploy" 
