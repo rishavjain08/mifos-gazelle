@@ -1,8 +1,8 @@
 ph-ee-engine:
   global: 
     imagePullPolicy: IfNotPresent
-  #   tenants: "rhino,gorilla,wakanda,pluto,venus,jupiter"
-  #   DFSPIDS: "wakanda,pluto,venus,jupiter,gorilla"
+    tenants: "greenbank,bluebank"
+    DFSPIDS: "greenbank,bluebank"
 
 
   elasticsearch:
@@ -51,8 +51,8 @@ ph-ee-engine:
       PH_ACT_BACKEND_SERVER_URL: https://ops.mifos.gazelle.test
       PH_OPS_BULK_CONNECTOR_URL: https://bulk-connector.mifos.gazelle.test
       PH_OPS_SIGNATURE_URL: https://ops.mifos.gazelle.test/api/v1/util/x-signature
-      PH_PLATFORM_TENANT_ID: gorilla
-      PH_PLATFORM_TENANT_IDS: gorilla
+      PH_PLATFORM_TENANT_ID: lion
+      PH_PLATFORM_TENANT_IDS: lion
     auth:
       PH_AUTH_ENABLED: false
       PH_OAUTH_ENABLED: false
@@ -202,16 +202,33 @@ ph-ee-engine:
 
   # PH-EE Connector Mojaloop
   ph_ee_connector_mojaloop:
+    image: mojaloop-connector:gazelle
+    imagePullPolicy: "Never"
     ingress:
       enabled: true
       className: nginx
+    switch:
+      quotes:
+        host: ""
+        service: ""
+      als:
+        host: "fspiop.mifos.gazelle.test"
+        service: "fspiop.mifos.gazelle.test"
+      transfers:
+        host: "fspiop.mifos.gazelle.test"
+        service: ""
+      transactions:
+        host: "fspiop.mifos.gazelle.test"
+        service: ""
+      oracle:
+      host: "fspiop.mifos.gazelle.test"
 
   ph_ee_connector_ams_mifos:
     ams_local_enabled: true
-    ams_local_interop_host: "http://fineract-server.mifosx-1.svc.cluster.local/"
-    ams_local_account_host: "http://fineract-server.mifosx-1.svc.cluster.local/"
-    ams_local_customer_host: "http://fineract-server.mifosx-1.svc.cluster.local/"
-    ams_local_auth_host: "http://fineract-server.mifosx-1.svc.cluster.local/"
+    ams_local_interop_host: "fineract-server"
+    ams_local_account_host: "fineract-server"
+    ams_local_customer_host: "fineract-server"
+    ams_local_auth_host: "fineract-server"
     ingress:
       enabled: true
       className: nginx
@@ -259,7 +276,7 @@ ph-ee-engine:
 
   connector_bulk:
     enabled: true
-    tenants: "rhino,gorilla"
+    tenants: "greenbank,bluebank"
     # deployment:
     #   annotations:
     #     rollme: "{{ randAlphaNum 5 | quote }}"

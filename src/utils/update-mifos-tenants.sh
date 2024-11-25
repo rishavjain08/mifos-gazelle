@@ -192,6 +192,7 @@ generate_tenant_sql() {
         cat << EOF >> "$SQL_FILE"
 
 -- Setup for tenant $identifier (ID: $id)
+CREATE DATABASE IF NOT EXISTS $db_name; 
 DELETE FROM tenants WHERE id=$id;
 DELETE FROM tenant_server_connections WHERE id=$id;
 
