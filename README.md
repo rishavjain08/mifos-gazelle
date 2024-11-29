@@ -1,11 +1,11 @@
 # Mifos Gazelle 
 [![Mifos](https://img.shields.io/badge/Mifos-Gazelle-blue)](https://github.com/openMF/mifos-gazelle)
-> Deployment utilities for Mifos/Fineract, Payment Hub EE, and Mojaloop vNext (as of October 2024)
+> Deployment utilities for MifosX (including Fineract backend), Payment Hub EE, and Mojaloop vNext (as of October 2024)
 
 ## Quick Links
-- [Mifos Gazelle README](docs/MIFOS-GAZELLE-README.md) - Deploy and run Mifos and vNext 
+- [Mifos Gazelle README](docs/MIFOS-GAZELLE-README.md) - Deploy and run MifosX, Mifos Payment Hub EE and vNext 
 - [Postman Testing](docs/POSTMAN.md) - Running Postman collections 
-- [vNext README](docs/VNEXT-README.md) - deploy and runing vNext on its own
+- [vNext README](docs/VNEXT-README.md) - dDploy and run vNext on its own
 
 
 
@@ -25,12 +25,16 @@ platform-shared-tools/
 │   ├── MIFOS-GAZELLE-README.md
 │   ├── POSTMAN.md 
 │   └── VNEXT-README.md
-└── src/
+├── performance-testing/
+├── postman/
+├── src/
+└── tests/
 
 ```
 
 ## Additional Resources
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [License Information](LICENSE.md)
+- [Architecture](ARCHITECTURE.md)
 
 

@@ -1,7 +1,7 @@
-# Mifos Gazelle - standlone deployment of vNext Beta1
+# Mifos Gazelle - standalone deployment of vNext Beta1
 
 ## Overview
- Mifos Gazelle as well as deploying MifosX, PaymentHub EE and vNext together also enables complete stand-alone deployment of vNext Beta1 this can serve as a useful tool for focussed vNext standalone testing and experimentation. For those familiar with mini-loop installation of vNext Mifos Gazelle provides eactly the same function and Mifos Gazelle is under active development.    
+ Mifos Gazelle as well as deploying MifosX, PaymentHub EE and vNext together also enables complete stand-alone deployment of vNext Beta1 this can serve as a useful tool for focussed vNext standalone testing and experimentation. For those familiar with mini-loop installation of vNext, Mifos Gazelle provides exactly the same function with the advantage that Mifos Gazelle is under active development.    
 
 ## vNext standalone installation using Mifos Gazelle  
 This is exactly the same process as for any Mifos Gazelle deployment but we use the -a flag as described in the main Mifos Gazelle README
@@ -23,12 +23,12 @@ sudo ./run.sh -u $USER -m deploy -d true -a vNext
 > **Reminder**: currently Mifos Gazelle deployments including those of vNext Beta1 are  not intended for production use.
 
 ## Mifos Gazelle vNext deployment features
-- **realistic Environment**: Runs a complete Kubernetes stack for realistic testing
+- **Realistic Environment**: Runs a complete Kubernetes stack for realistic testing
 - **Simple Deployment**: Requires minimal command execution
 - **Quick Setup**: Deploys in approximately 5-10 minutes with proper configuration
 - **Automation-friendly**: Scripts can be integrated with CI/CD pipelines
 - **Resource Efficient**: Optimized resource usage for testing environments
-- **vNext only**: using the -a flag on the Mifs Gazelle installer 
+- **vNext only**: using the -a flag on the Mifos Gazelle installer 
 
 ## Supported Environments
 - the Mifos Gazelle vNext Beta install works on Ubuntu 20.04 and 22.04 LTS on x86_64 or ARM64:
@@ -37,13 +37,13 @@ sudo ./run.sh -u $USER -m deploy -d true -a vNext
   - Cloud instances (AWS, GCP, Azure, etc.)
 
 ## Prerequisites
-As listed in the main Mifos Gazelle README.md but also this is tested against 
+As listed in the main Mifos Gazelle README.md but additionally this has been tested against 
 - Ubuntu 20.04 or 22.04 LTS 
 - x86_64 or ARM64 architecture 
 
 
 ## Installation Steps for vNext only installation 
-to intall vNext only using Mifos Gazelle 
+to install vNext only using Mifos Gazelle 
 ```bash
 # Navigate to home directory
 cd $HOME
@@ -70,7 +70,7 @@ The installation automatically configures local hostnames in `/etc/hosts` for th
 To access vNext services from another machine:
 
 1. Ensure port 80 is accessible on the deployment system
-2. Add the following hostnames to the hosts file on the desktop or latptop where your browser is running:
+2. Add the following hostnames to the hosts file on the desktop or laptop where your browser is running:
 
 ```
 <deployment-ip>  vnextadmin.mifos.gazelle.test elasticsearch.mifos.gazelle.test kibana.mifos.gazelle.test mongoexpress.mifos.gazelle.test kafkaconsole.mifos.gazelle.test fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test
@@ -109,7 +109,7 @@ ipconfig /flushdns
 ## Known Limitations of the vNext (Beta1 Release)
 1. Beta status: Mifos Gazelle currently deploys the vNext Beta1
 2. Ubuntu version: Tested only on Ubuntu 20.04 and 22.04 LTS
-3. Kubernetes: Currently supports k3s , this will be updated as Mifos gazelle works across a wider variety of kubernetes clusters e.g. EKS,AKS,GKE etc 
+3. Kubernetes: Currently supports k3s , this will be updated as Mifos Gazelle works across a wider variety of kubernetes clusters e.g. EKS,AKS,GKE etc 
 4. Logging: Log format improvements planned for better CI/CD integration
 5. DNS Configuration: Domain name configuration feature pending implementation localhosts is used currently
 6. Endpoint Testing: Automated service validation to be implemented
@@ -126,3 +126,7 @@ ipconfig /flushdns
 - Configuration can be customized for specific needs
 - Ideal for development, testing, and educational purposes
 - Not suitable for production deployments
+
+## Support
+- Support for deployment issues through Mifos-Gazelle can be obtained through the Mifos Gazelle Slack channel https://mifos.slack.com/archives/C082PNLUCRK
+- Support for issues with vNext Beta 1 should be directed to the Mojaloop Development Community.
