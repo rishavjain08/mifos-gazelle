@@ -1,3 +1,6 @@
+
+
+
 ph-ee-engine:
   global: 
     imagePullPolicy: IfNotPresent
@@ -51,8 +54,8 @@ ph-ee-engine:
       PH_ACT_BACKEND_SERVER_URL: https://ops.mifos.gazelle.test
       PH_OPS_BULK_CONNECTOR_URL: https://bulk-connector.mifos.gazelle.test
       PH_OPS_SIGNATURE_URL: https://ops.mifos.gazelle.test/api/v1/util/x-signature
-      PH_PLATFORM_TENANT_ID: lion
-      PH_PLATFORM_TENANT_IDS: lion
+      PH_PLATFORM_TENANT_ID: greenbank
+      PH_PLATFORM_TENANT_IDS: "greenbank,bluebank" 
     auth:
       PH_AUTH_ENABLED: false
       PH_OAUTH_ENABLED: false
@@ -125,6 +128,24 @@ ph-ee-engine:
   camunda-platform:
     enabled: true
 
+    operate: 
+      enabled: true 
+      ingress:
+        ## @param operate.ingress.enabled if true, an ingress resource is deployed with the Operate deployment. Only useful if an ingress controller is available, like nginx. Warning, separated ingress is deprecated and will be removed in the next release, please use global.ingress instead.
+        enabled: true 
+        ## @param operate.ingress.className defines the class or configuration of ingress which should be used by the controller
+        className: nginx
+        annotations:
+          ingress.kubernetes.io/rewrite-target: '/'
+          nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+          nginx.ingress.kubernetes.io/proxy-buffer-size: '128k'
+          nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+        path: /
+        pathType: Prefix
+        host: zeebe-operate.mifos.gazelle.test
+        tls:
+          enabled: false
+  
     zeebe:   
     # removes dependency of https://fynarfin.io for exporter jarfile   
     # TODO move this to mifos artifactory !!!
@@ -361,6 +382,7 @@ ph-ee-engine:
     testTags: "@gov and not @ext"
     memoryRequest: "500k"
     testResultsOutputDir: "/tmp"
+
 
 
 # Account Mapper

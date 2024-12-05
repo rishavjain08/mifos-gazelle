@@ -85,7 +85,7 @@ deployBPMS() {
     if [ -f "$file" ]; then
       # Construct and execute the curl command for each file
       local cmd="curl --insecure --location --request POST $host \
-          --header 'Platform-TenantId: gorilla' \
+          --header 'Platform-TenantId: greenbank' \
           --form 'file=@\"$file\"' \
           -s -o /dev/null -w '%{http_code}'"
 
