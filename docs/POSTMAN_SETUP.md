@@ -1,4 +1,6 @@
-# SETTING UP POSTMAN COLLECTIONS for Payment Hub EE 
+# SETTING UP POSTMAN COLLECTIONS FOR MIFOS-GAZELLE
+
+*LIMITATION:  Currently only for Payment Hub EE 
 
 We have a bash script `postman_setup.sh` under the [src](../src/) directory that you can run to skip through the steps 1 and 5. 
 To run the script, you can do the following:
@@ -23,17 +25,17 @@ Add the following hosts to your host file on your system:
 IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS vnextadmin.local elasticsearch.local kibana.local mongoexpress.local kafkaconsole.local fspiop.local bluebank.local greenbank.local mifos.local
 ```
 
-`PaymentHub Hosts`
+`Payment Hub EE Hosts`
 ```bash
 IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS ops.local ops-bk.local bulk-connector.local messagegateway.local minio.local ams-mifos.local bill-pay.local channel.local channel-gsma.local crm.local mockpayment.local mojaloop.local identity-mapper.local analytics.local vouchers.local zeebeops.local notifications.local
 ```
 
-`Fineract Hosts`
+`MifosX Hosts`
 ```bash
 IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS mifos.local
 ```
 
-NOTE: If you want detailed steps on how to configure your hosts, you may go through the `USING THE DEPLOYED APPS` section of the [README](./README.md).
+NOTE: If you want detailed steps on how to configure your hosts, you may go through the `ACCESSING DEPLOYED APPLICATIONS` section of the [MIFOS-GAZELLE-README](MIFOS-GAZELLE-README.md).
 
 ## Step 2: Downloading Postman
 You can download postman from [this](https://www.postman.com/downloads) link.
@@ -50,11 +52,11 @@ To import the environment for running the collection, you can go to Environments
 NOTE: You may need to change some of the environment variables if the hosts are different.
 
 ## Step 5: Upload the BPMN Diagrams
-To run the APIs, such as, for example `Batch Transactions`, you need to have all the BPMN diagrams loaded into your zeebe ops.
+To run the APIs, such as, for example `Batch Transactions`, you need to have all the BPMN diagrams loaded into your Zeebe ops.
 For that you can do the following steps:
-Browse to the directory `src/mojafos/deployer/apps/ph_env_labs/orchestration/feel`. Here you can all of the BPMN diagrams that are required to run the APIs. 
+Browse to the directory `src/mojafos/deployer/apps/ph_env_labs/orchestration/feel`. Here you can get all of the BPMN diagrams that are required to run the APIs. 
 Now, you can go to the folder `Zeebe Operations APIs` under the imported Postman Collection and find the API for uploading BPMN diagrams, i.e, `Upload BPMN` with route `{{ZeebeOpsHostName}}/zeebe/upload`.
-You can pass in the `.bpmn` files into the `file` parameter of form-data and upload the required diagrams to zeebe.
+You can pass in the `.bpmn` files into the `file` parameter of form-data and upload the required diagrams to Zeebe.
 
 ## Step 6: Setup Complete
 After following the above steps correctly, you'll be able to run the postman collections smoothly.
