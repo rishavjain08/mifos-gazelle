@@ -15,7 +15,7 @@
   - [Mojaloop vNext](#accessing-mojaloop-vnext)
   - [Payment Hub](#accessing-payment-hub-EE)
   - [MifosX](#accessing-mifosx)
-- [Running helm test] (#helm-test)
+- [Running helm test](#helm-test)
 - [Development Status](#development-status)
 
 ## Goal of Mifos Gazelle
