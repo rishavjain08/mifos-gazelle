@@ -1,13 +1,8 @@
-
-
-
 ph-ee-engine:
   global: 
     imagePullPolicy: IfNotPresent
     tenants: "greenbank,bluebank"
     DFSPIDS: "greenbank,bluebank" 
-
-
 
   elasticsearch:
     esJavaOpts: "-Xms512m -Xmx512m"
