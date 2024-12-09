@@ -5,7 +5,8 @@ ph-ee-engine:
   global: 
     imagePullPolicy: IfNotPresent
     tenants: "greenbank,bluebank"
-    DFSPIDS: "greenbank,bluebank"
+    DFSPIDS: "greenbank,bluebank" 
+
 
 
   elasticsearch:
@@ -17,6 +18,26 @@ ph-ee-engine:
       limits:
         cpu: "1000m"
         memory: "1000M"
+    ingress:
+      enabled: true 
+      className: nginx
+      pathtype: ImplementationSpecific
+      hosts:
+        - host: elastic-phee.mifos.gazelle.test
+          paths:
+            - path: /
+
+  kibana:
+    elasticsearchHosts: http://ph-ee-elasticsearch:9200
+    ingress:
+      enabled: true 
+      className: nginx
+      pathtype: ImplementationSpecific
+      hosts:
+        - host: kibana-phee.mifos.gazelle.test
+          paths:
+            - path: /
+
 
   # Operations app
   operations_app:
@@ -129,7 +150,7 @@ ph-ee-engine:
     enabled: true
 
     operate: 
-      enabled: true 
+      enabled: false
       ingress:
         ## @param operate.ingress.enabled if true, an ingress resource is deployed with the Operate deployment. Only useful if an ingress controller is available, like nginx. Warning, separated ingress is deprecated and will be removed in the next release, please use global.ingress instead.
         enabled: true 
@@ -146,6 +167,12 @@ ph-ee-engine:
         tls:
           enabled: false
   
+    zeebe-gateway:
+      ingress:
+        enabled: true 
+        className: nginx
+        host: zeebe-gateway.mifos.gazelle.test 
+
     zeebe:   
     # removes dependency of https://fynarfin.io for exporter jarfile   
     # TODO move this to mifos artifactory !!!
@@ -175,6 +202,8 @@ ph-ee-engine:
       memory: "128k"
       cpu: "50m"
 
+
+
   # Vouchers
   vouchers:
     enabled: true
@@ -182,12 +211,12 @@ ph-ee-engine:
       enabled: true
       className: nginx
   
-  # Kibana
-  kibana:
-    ingress:
-      enabled: true
-    hosts:
-      - host: kibana.mifos.gazelle.test
+  # # Kibana
+  # kibana:
+  #   ingress:
+  #     enabled: true
+  #   hosts:
+  #     - host: kibana.mifos.gazelle.test
 
   # Notifications
   notifications:
@@ -242,7 +271,33 @@ ph-ee-engine:
         host: "fspiop.mifos.gazelle.test"
         service: ""
       oracle:
-      host: "fspiop.mifos.gazelle.test"
+        host: "fspiop.mifos.gazelle.test"
+    deployment:
+      extraEnvs:
+        - name: parties_0_domain
+          value: "https://fynams.fred.io/"
+        - name: parties_1_domain
+          value: "mojaloop.fred.io"
+        - name: parties_2_domain
+          value: "mojaloop.fred.io"
+        - name: parties_3_domain
+          value: "mojaloop.fred.io"
+        - name: parties_0_tenantId
+          value: "greenbank"
+        - name: parties_1_tenantId
+          value: "bluebank"
+        - name: parties_2_tenantId
+          value: "FREDpluto"
+        - name: parties_3_tenantId
+          value: "FREDvenus"
+        - name: parties_0_fspId
+          value: "FREDpayerfsp"
+        - name: parties_1_fspId
+          value: "FREDpayeefsp"
+        - name: parties_2_fspId
+          value: "FREDpayeefsp2"
+        - name: parties_3_fspId
+          value: "FREDpayeefsp3"        
 
   ph_ee_connector_ams_mifos:
     ams_local_enabled: true
@@ -406,7 +461,9 @@ account_mapper:
     #               number: 80
 
 
-  # camunda-platform:  
+
+
+
   #   webModeler:
   #     enabled: true
   #     restapi:
