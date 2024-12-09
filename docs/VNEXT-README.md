@@ -109,7 +109,7 @@ ipconfig /flushdns
 ## Known Limitations of the vNext (Beta1 Release)
 1. Beta status: Mifos Gazelle currently deploys the vNext Beta1
 2. Ubuntu version: Tested only on Ubuntu 20.04 and 22.04 LTS
-3. Kubernetes: Currently supports k3s , this will be updated as Mifos Gazelle works across a wider variety of kubernetes clusters e.g. EKS,AKS,GKE etc 
+3. Kubernetes: Currently supports k3s , this will be updated as Mifos Gazelle works across a wider variety of Kubernetes clusters e.g. EKS,AKS,GKE etc 
 4. Logging: Log format improvements planned for better CI/CD integration
 5. DNS Configuration: Domain name configuration feature pending implementation localhosts is used currently
 6. Endpoint Testing: Automated service validation to be implemented

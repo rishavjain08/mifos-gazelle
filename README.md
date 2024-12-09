@@ -5,7 +5,7 @@
 ## Quick Links
 - [Mifos Gazelle README](docs/MIFOS-GAZELLE-README.md) - Deploy and run MifosX, Mifos Payment Hub EE and vNext 
 - [Postman Testing](docs/POSTMAN.md) - Running Postman collections 
-- [vNext README](docs/VNEXT-README.md) - dDploy and run vNext on its own
+- [vNext README](docs/VNEXT-README.md) - Deploy and run vNext on its own
 
 
 
