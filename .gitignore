@@ -170,3 +170,19 @@ ph/
 fineract/
 apps/
 repos/ 
+
+# OS generated files #
+######################
+.DS_Store
+.settings
+.Spotlight-V100
+.Trashes
+.terraform
+ehthumbs.db
+Thumbs.db
+.project
+.cproject
+.pydevproject
+.idea
+*.swp
+sds_*

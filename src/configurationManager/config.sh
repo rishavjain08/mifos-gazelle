@@ -22,7 +22,6 @@ VNEXT_VALUES_FILE="$CONFIG_DIR/vnext_values.json"
 VNEXT_MONGODB_DATA_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files/mongodb"
 VNEXT_TTK_FILES_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files"
 
-
 #PaymentHub EE 
 PHBRANCH="master"
 PHREPO_DIR="phlabs"
@@ -31,7 +30,7 @@ PH_RELEASE_NAME="phee"
 PH_VALUES_FILE="$CONFIG_DIR/ph_values.yaml"
 PH_REPO_LINK="https://github.com/openMF/ph-ee-env-labs.git"
 PH_EE_ENV_TEMPLATE_REPO_LINK="https://github.com/openMF/ph-ee-env-template.git"
-PH_EE_ENV_TEMPLATE_REPO_BRANCH="c4gt-gazelle-dev"
+PH_EE_ENV_TEMPLATE_REPO_BRANCH="v1.13.0-gazelle"
 PH_EE_ENV_TEMPLATE_REPO_DIR="ph_template"
 
 # Define Kubernetes service and MySQL connection details

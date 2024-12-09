@@ -85,7 +85,7 @@ deployBPMS() {
     if [ -f "$file" ]; then
       # Construct and execute the curl command for each file
       local cmd="curl --insecure --location --request POST $host \
-          --header 'Platform-TenantId: gorilla' \
+          --header 'Platform-TenantId: greenbank' \
           --form 'file=@\"$file\"' \
           -s -o /dev/null -w '%{http_code}'"
 
@@ -668,8 +668,8 @@ function deployvNext() {
     if [[ "$redeploy" == "false" ]]; then
       echo "    vNext application is already deployed. Skipping deployment."
       return
-      # else # need to delete prior to redeploy 
-      #   deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
+    else # need to delete prior to redeploy 
+      deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
     fi
   fi 
   createNamespace "$VNEXT_NAMESPACE"
@@ -777,6 +777,8 @@ function deployApps {
   appsToDeploy="$2"
   redeploy="$3"
 
+  echo "redeploy is $redeploy"
+
   if [[ "$appsToDeploy" == "all" ]]; then
     echo -e "${BLUE}Deploying all apps ...${RESET}"
     deployInfrastructure "$redeploy" 
@@ -789,8 +791,26 @@ function deployApps {
     deployInfrastructure "false"
     deployvNext
   elif [[ "$appsToDeploy" == "mifosx" ]]; then 
+    if [[ "$redeploy" == "true" ]]; then 
+      echo "removing current mifosx and redeploying"
+      deleteApps 1 "mifosx"
+    fi 
     deployInfrastructure "false"
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"  "$MIFOSX_num_instances"
+    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"  "$mifosx_num_instances"
+    # here we need to add the second tenant to the mysql database 
+    # this is how to check to see how many rows are in a schema 
+    # can use this to determine when mifos has finished creating tables 
+    # 249 seems to be the magic number for fineract_default schema for openmf/fineract:develop 
+    # kubectl run mysql-client --rm -it --image=mysql:5.6 --restart=Never -- mysql -h mysql.infra.svc.cluster.local -u root -pmysqlpw \
+    # -B -e 'SELECT count(*) AS TOTALNUMBEROFTABLES FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "fineract_default" '
+    # kubectl -n $INFRA_NAMESPACE cp $CONFIG_DIR/mifos-multi-tenant.sql mysql-0:/tmp
+    # kubectl -n $INFRA_NAMESPACE exec  mysql-0 
+    # TODO: add the automation above BUT for now use 
+    #       src/utils/update-mifos-tenants.sh and do this after run.sh has completed and pods are up
+    #       NOTE: the reason I am hesitating to add this now is the time it takes then for the fineract-server pod to come online 
+    #             I need to see what the perf hit is *also* I am thiking we should simply export/import the mysql database 
+    #             as part of the infra startup
+
   elif [[ "$appsToDeploy" == "phee" ]]; then
     deployPH
   else 

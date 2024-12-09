@@ -6,11 +6,12 @@ BPMN_DIR="$( cd $(dirname "$SCRIPT_DIR")/../repos/phlabs ; pwd )"
 
 HOST="https://zeebeops.mifos.gazelle.test/zeebe/upload"
 DEBUG=false
+TENANT="bluebank"  # Default tenant
 
 deploy() {
     local file="$1"
     local cmd="curl --insecure --location --request POST $HOST \
-        --header 'Platform-TenantId: gorilla' \
+        --header 'Platform-TenantId:$TENANT' \
         --form 'file=@\"$file\"' \
         -s -o /dev/null -w '%{http_code}'"
 
@@ -32,14 +33,41 @@ deploy() {
     fi
 }
 
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [options]
+
+Options:
+  -f <file>   Specify a single file to upload.
+  -t <tenant> Specify the tenant name (default: bluebank).
+  -d          Enable debug mode for detailed output.
+  -h          Show this help message.
+
+Description:
+  This script uploads BPMN files to a Zeebe instance. If no file is specified,
+  it will upload all BPMN files from predefined locations.
+
+Examples:
+  $(basename "$0") -f myprocess.bpmn
+  $(basename "$0") -t mytenant
+EOF
+    exit 0
+}
+
 # Parse command line arguments
-while getopts ":df:" opt; do
+while getopts ":f:t:dh" opt; do
     case $opt in
+        f)
+            SINGLE_FILE="$OPTARG"
+            ;;
+        t)
+            TENANT="$OPTARG"
+            ;;
         d)
             DEBUG=true
             ;;
-        f)
-            SINGLE_FILE="$OPTARG"
+        h)
+            usage
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
