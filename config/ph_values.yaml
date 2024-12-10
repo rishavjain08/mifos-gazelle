@@ -246,6 +246,7 @@ ph-ee-engine:
         deployTime: "{{ .Values.deployTime }}"
 
   # PH-EE Connector Mojaloop
+  # Note 'fred' and 'FRED' are development hooks as we continue to work on end to end integration flows.
   ph_ee_connector_mojaloop:
     image: mojaloop-connector:gazelle
     imagePullPolicy: "Never"
@@ -281,18 +282,6 @@ ph-ee-engine:
           value: "greenbank"
         - name: parties_1_tenantId
           value: "bluebank"
-        - name: parties_2_tenantId
-          value: "FREDpluto"
-        - name: parties_3_tenantId
-          value: "FREDvenus"
-        - name: parties_0_fspId
-          value: "FREDpayerfsp"
-        - name: parties_1_fspId
-          value: "FREDpayeefsp"
-        - name: parties_2_fspId
-          value: "FREDpayeefsp2"
-        - name: parties_3_fspId
-          value: "FREDpayeefsp3"        
 
   ph_ee_connector_ams_mifos:
     ams_local_enabled: true
@@ -303,7 +292,6 @@ ph-ee-engine:
     ingress:
       enabled: true
       className: nginx
-
 
   # Mockpayment
   mockpayment:
