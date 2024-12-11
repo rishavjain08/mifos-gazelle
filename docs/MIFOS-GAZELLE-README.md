@@ -2,7 +2,7 @@
 
 [![Mifos](https://img.shields.io/badge/Mifos-Gazelle-blue)](https://github.com/openMF/mifos-gazelle)
 
-> Deployment utilities for MifosX, Payment Hub EE, and Mojaloop vNext (as of October 2024)
+> Deployment utilities for MifosX, Payment Hub EE (PH-EE), and Mojaloop vNext (as of October 2024)
 
 ## Table of Contents
 - [Goal](#goal-of-mifos-gazelle)
@@ -24,13 +24,15 @@
 ## Goal of Mifos Gazelle
 The overall aim of Mifos Gazelle is to provide a trivially simple installation and configuration mechanism for DPGs as part of a DPI construct.  Initially this is focussed on Mifos applications for Core-Banking and Payment Orchestration and the Mojaloop vNext financial transactions switch. The idea is to create a rapidly deployable , understandable and cheap integration to serve as a showcase and a laboratory environment to enable others to build further on these DPI projects. As the project continues we have a roadmap of additional DPGs, demo cases, and other features we want to implement, along with looking at how it could be used for production in-cloud and on-premise deployments.
 
+IMPORTANT NOTE: As Mifos-Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for release 1.0.0. we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status as not occurred yet.
+
 ## Gazelle features (benefits)
 - Mifos Gazelle installs each or all 3 DPGs in a reliable , repeatable way using simple bash scripts. 
 - The bash scripts are designed to enable developers to understand and modify the configuration of each or all products.
 - Install of all 3 products is quick 15 mins or less with reasonable hardware
 Fully functioning MifosX , with the addition of tools to simply add additional tenants
 Fully functioning vNext (beta1) with integrated demo and test environment, admin UI and pre-loaded demo data
-Installed and partially configured PHEE with deployed and semi-functioning Web Client
+Installed and partially configured PHEE with deployed Web Client(note: see limitations under development status)
 
 
 ## Prerequisites
@@ -60,7 +62,7 @@ git clone --branch dev https://github.com/openMF/mifos-gazelle.git
 # Enter the project directory
 cd mifos-gazelle
 
-# Deploy all components (MifosX, vNext, and PHEE)
+# Deploy all components (MifosX, vNext, and PH-EE)
 sudo ./run.sh -u $USER -m deploy -d true -a all
 ```
 
@@ -175,8 +177,8 @@ Add the following entries to your hosts file on the laptop/desktop system where 
 ```
 
 ## Helm test
-Note the Payment Hub helm tests are being reconfigured as we continue to work on end to end integration flows.
-helm tests are currently enabled/disabled in the config/ph_values.yaml file , look for integration_tests. To execute the helm tests run 
+Note the Payment Hub Helm tests are being reconfigured as we continue to work on end to end integration flows, therefore you may get significant errors due to naming at this present point in time (prior to the reconfiguration exercise though they were reporting 90%+ success).
+Helm tests are currently enabled/disabled in the config/ph_values.yaml file , look for integration_tests. To execute the helm tests run 
 ```bash
 helm test phee 
 ```
@@ -184,7 +186,7 @@ then examine the logfiles using either k9s or
 ```bash
 kubectl logs -n paymenthub ph-ee-integration-test-gazelle
 ```
-you can access the results by copying them from the pod to the /tmp directory of the server machine or VM using the script below.  This will place the results into a directory similar to mydir.SzSauX i.e. of the form /tmp/mydir.XXXXXX. You will need to copy this directory from the server/VM to your desktop/laptop to browse the results , look for the subdirectory of tests/test/index.html as the top level for your browser. Note that the pod will time-out after 90 mins and you will need to remove the ph-ee-integration-test-gazelle pod before running helm test phee again. 
+You can access the results by copying them from the pod to the /tmp directory of the server machine or VM using the script below.  This will place the results into a directory similar to mydir.SzSauX i.e. of the form /tmp/mydir.XXXXXX. You will need to copy this directory from the server/VM to your desktop/laptop to browse the results , look for the subdirectory of tests/test/index.html as the top level for your browser. Note that the pod will time-out after 90 mins and you will need to remove the ph-ee-integration-test-gazelle pod before running helm test phee again. 
 ```bash
 ~/mifos-gazelle/src/utils/copy-report-from-pod.sh 
 ``` 
@@ -195,27 +197,27 @@ the process to add tenants to a MifosGazelle deployed MifosX deployment is a 2 p
 1. modify the example tenant configuration file mifos-gazelle/config/mifos-tenant-config.csv for your chosen tenant names 
 2. apply the example tenant configuration to add the new tenants by runnning ``` mifos-gazelle/src/update-mifos-tenants.sh ```
 3. in k9s locate and kill the fineract-server process in the MifosX namespace (use ```ctrl-k ``` from k9s) it will automatically be restarted by kubernetes. 
-When fineract-server is restarted the new tenants schemas tables and artifcacts will be created. You can check the fineract-server logs from k9s, again locate the new fineract-server pod and press  ```l``` for logs when that pod is highlighted.  
+When fineract-server is restarted the new tenants schemas tables and artefacts will be created. You can check the fineract-server logs from k9s, again locate the new fineract-server pod and press  ```l``` for logs when that pod is highlighted.  
 
 ## Development Status
-Please note that limitations here are entirely those of the Mifos Gazelle configuration, and should not at all be interpreted as issues with the maturity or functionality of the deployed DPGs .  
-- Currently operations-web UI https://ops.mifos.gazelle.test can access batches and transfers and can create and send batches to bulk. It is not yet clear that the batches are correctly processed on the back end, this of course is being worked on. 
+Please note that limitations here are entirely those of the Mifos Gazelle configuration, and should not at all be interpreted as issues with the maturity or functionality of the deployed DPGs.  
+- Currently PH-EE operations-web UI https://ops.mifos.gazelle.test can access batches and transfers and can create and send batches to bulk. It is not yet clear that the batches are correctly processed on the back end, this of course is being worked on. 
 -  ph-ee-integration-test docker image on dockerhub uses the tag  v1.6.2-gazelle and corresponds to the v1.6.2-gazelle branch of the v1.6.2 integration-test repo.  The helm tests as deployed by Gazelle reports approx 90% pass rate. 
 - PaymentHub EE v 1.13.0 is being provisioned by Mifos Gazelle and this is set in the config.sh script prior to deployment. This document defines all the sub chart releases that comprise the v1.13.0 release https://mifos.gitbook.io/docs/payment-hub-ee/release-notes/v1.13.0
 - There is a lot of tidying up to do once this is better tested, e.g. debug statements to remove and lots of redundant env vars to remove as well as commented out code to remove. 
 - It should be straightforward to integrate the Kubernetes operator work ( https://github.com/openMF/mifos-operators ) into this simplified single node deployment and this is planned for a future release 
 - vNext Beta1 functions and is tested on ARM64 there is a limitation on Raspberry Pi 4 (or less) with MongoDB due to requirement for ARMv8.2A. Whilst it is untested vNext Beta1 and its associated infrastructure layer deployed by Mifos Gazelle should "just work"  Use ```sudo ./run.sh -u <user> -m deploy -a vnext ``` on a clean install to try. In the future it should be straightforward and is planned to have MifosX and PaymentHub EE also working on ARM and Raspberry PI
--  
+
 
 ## Known Issues
 - Currently testing is limited to only systems and environments that meet the pre-requisites 
 - Only single instance/node deployment currently supported , there is no reason for this except it is all that is currently tested. 
 - Some cleanup is likely needed (debug statements, redundant environment variables) but as some of this is in use that will happen in future releases
-- PaymentHub EE kubernetes operator has been developed and will be integrated in future releases
+- PaymentHub EE Kubernetes operator has been developed and will be integrated in future releases
 - Updated Operations web integration pending (pending in PH-EE too - https://github.com/openMF/ph-ee-operations-web/pull/98 and https://github.com/openMF/ph-ee-operations-web/pull/99 )
 - as part of Gazelle development the helm tests databases , tenants etc are being reconfigured and consequently helm tests are likely to report high failure rate 
 - PaymentHub EE integration with vNext and MifosX is not complete (no end-to-end txns yet) => Operations-Web UI is limited in function
 - demonstration data is not currently loaded for MifosX (but this is readily available)
-- The postman tests privided by the individual DPGs have not yet been fully adapted to the Mifos Gazelle deployment environment, again this will happenin future releases in a structure fashion. 
-- There are some issues on older (Intel/Opeteron) hardware with nginx, MongoDB  and ElasticSearch. 
-- Reminder Mifos Gazelle deployment of the 3 DPGs is *not at all secure*. (Note this is true no matter the security status of the underlying DPGs). Security will necessarily become a major focus as we look to more production ready deployments in future releases. 
+- The postman tests provided by the individual DPGs have not yet been fully adapted to the Mifos Gazelle deployment environment, again this will happen in future releases in a structure fashion. 
+- There are some issues on older (Intel/Opteron) hardware with nginx, MongoDB  and ElasticSearch. 
+- Reminder Mifos Gazelle deployment of the 3 DPGs is *not at all secure*. (Note this is true no matter of the security status of the underlying DPGs). Security will necessarily become a major focus as we look to more production ready deployments in future releases. 
