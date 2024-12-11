@@ -2,12 +2,10 @@
 
 *LIMITATION:  Currently only for Payment Hub EE 
 
-We have a bash script `postman_setup.sh` under the [src](../src/) directory that you can run to skip through the steps 1 and 5. 
+We have a bash script `postman_setup.sh` under the [src](../src/utils/) directory that you can run to skip through the steps 1 and 5. 
 To run the script, you can do the following:
 Go to the directory where the script is located and run the following command:
-```bash
-sudo chmod +x postman_setup.sh
-```
+
 Then run the script:
 ```bash
 sudo ./postman_setup.sh <IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS> -o <true/false>
@@ -41,13 +39,13 @@ NOTE: If you want detailed steps on how to configure your hosts, you may go thro
 You can download postman from [this](https://www.postman.com/downloads) link.
 
 ## Step 3: Importing Collections
-After downloading, open postman, go to collections. Then click on `import` and open the file: `src/mojafos/deployer/apps/ph_template/PostmanCollections/Payment Hub.json`.
+After downloading, open postman, go to collections. Then click on `import` and open the file: `repos/ph_template/PostmanCollections/Payment Hub.json`.
 
 NOTE: This directory and file appears only after you have run the installation, if you need to import the collections without running the deployment, then you can download from [here](https://raw.githubusercontent.com/openMF/ph-ee-env-template/master/PostmanCollections/Payment%20Hub.json).
 
 
 ## Step 4: Importing Environment
-To import the environment for running the collection, you can go to Environments, then click on Import and then open the file `src/mojafos/deployer/apps/ph_template/PostmanCollections/Environment/PHEE_G2P_Demo.postman_environment.json`.
+To import the environment for running the collection, you can go to Environments, then click on Import and then open the file `repos/ph_template/PostmanCollections/Environment/PHEE_G2P_Demo.postman_environment.json`.
 
 NOTE: You may need to change some of the environment variables if the hosts are different.
 
