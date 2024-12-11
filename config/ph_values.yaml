@@ -59,10 +59,8 @@ ph-ee-engine:
       #             number: 80
 
   operations_web:
+    # Note 'fred' and 'FRED' are development hooks as we continue to work on end to end integration flows.
     enabled: true
-    #image: docker.io/openmf/ph-ee-operations-web:v1.20.0
-    # note as at Oct 2024 latest is Victor's fix for oneacre issue is in master branch 
-    #image: docker.io/openmf/ph-ee-operations-web:master
     image: docker.io/openmf/ph-ee-operations-web:dev1 
     backend:
       PH_OPS_BACKEND_SERVER_URL: https://ops.mifos.gazelle.test/api/v1
@@ -197,8 +195,6 @@ ph-ee-engine:
       memory: "128k"
       cpu: "50m"
 
-
-
   # Vouchers
   vouchers:
     enabled: true
@@ -228,19 +224,6 @@ ph-ee-engine:
     ingress:
       enabled: true
       className: nginx
-      # annotations: 
-      #   kubernetes.io/ingress.class: nginx  
-      # tls:
-      #   - secretName: sandbox-secret
-      # hosts:
-      #   - host: notifications.mifos.gazelle.test         
-      #     paths: 
-      #     - path: "/"
-      #       backend:
-      #         service:
-      #           name: "ph-ee-connector-notifications"
-      #           port:
-      #             number: 80  
     deployment:
       annotations:
         deployTime: "{{ .Values.deployTime }}"
@@ -248,8 +231,10 @@ ph-ee-engine:
   # PH-EE Connector Mojaloop
   # Note 'fred' and 'FRED' are development hooks as we continue to work on end to end integration flows.
   ph_ee_connector_mojaloop:
-    image: mojaloop-connector:gazelle
-    imagePullPolicy: "Never"
+    # the following 2 entries used only for dev/test of mojaloop connector 
+    # image: mojaloop-connector:gazelle
+    # imagePullPolicy: "Never"
+    image: openmf/ph-ee-connector-mojaloop:v1.5.0
     ingress:
       enabled: true
       className: nginx
@@ -421,8 +406,6 @@ ph-ee-engine:
     memoryRequest: "500k"
     testResultsOutputDir: "/tmp"
 
-
-
 # Account Mapper
 account_mapper:
   enabled: true
@@ -443,19 +426,3 @@ account_mapper:
     #             port:
     #               number: 80
 
-
-
-
-
-  #   webModeler:
-  #     enabled: true
-  #     restapi:
-  #       mail:
-  #         smtpHost: smtp.example.com
-  #         smtpPort: 587
-  #         smtpUser: mifosu
-  #         smtpPassword: secret
-  #         # Email address to be displayed as sender of emails from Web Modeler
-  #         fromAddress: no-reply@example.com
-  #   postgresql:
-  #     enabled: true
