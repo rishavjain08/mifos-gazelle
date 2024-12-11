@@ -149,9 +149,9 @@ function install_prerequisites {
 function add_hosts {
     printf "==> Mifos-gazelle : update hosts file \n"
     VNEXTHOSTS=( mongohost.mifos.gazelle.test mongo-express.mifos.gazelle.test \
-                 vnextadmin elasticsearch.mifos.gazelle.test redpanda-console.mifos.gazelle.test \
+                 vnextadmin.mifos.gazelle.test kafkaconsole.mifos.gazelle.test elasticsearch.mifos.gazelle.test redpanda-console.mifos.gazelle.test \
                  fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test \
-                 bluebank-specapi.mifos.gazelle.test greenbank-specapi.mifos.gazelle.test ) 
+                 bluebank-specapi.mifos.gazelle.test greenbank-specapi.mifos.gazelle.test  ) 
 
     PHEEHOSTS=(  ops.mifos.gazelle.test ops-bk.mifos.gazelle.test \
                  bulk-connector.mifos.gazelle.test messagegateway.mifos.gazelle.test \
@@ -159,8 +159,9 @@ function add_hosts {
                  bill-pay.mifos.gazelle.test channel.mifos.gazelle.test \
                  channel-gsma.mifos.gazelle.test crm.mifos.gazelle.test \
                  mockpayment.mifos.gazelle.test mojaloop.mifos.gazelle.test \
-                 identity-mapper.mifos.gazelle.test analytics.mifos.gazelle.test \
-                 vouchers.mifos.gazelle.test zeebeops.mifos.gazelle.test \
+                 identity-mapper.mifos.gazelle.test vouchers.mifos.gazelle.test \
+                 zeebeops.mifos.gazelle.test zeebe-operate.mifos.gazelle.test zeebe-gateway.mifos.gazelle.test \
+                 elastic-phee.mifos.gazelle.test kibana-phee.mifos.gazelle.test \
                  notifications.mifos.gazelle.test )  
 
     MIFOSXHOSTS=( mifos.mifos.gazelle.test fineract.mifos.gazelle.test ) 
