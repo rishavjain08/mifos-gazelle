@@ -134,18 +134,18 @@ Add the following entries to your hosts file on the laptop/desktop system where 
 
 ```bash
 # Linux/MacOS (/etc/hosts)
-<VM-IP>  vnextadmin elasticsearch.local kibana.local mongoexpress.local \
-         kafkaconsole.local fspiop.local bluebank.local greenbank.local 
+<VM-IP>  vnextadmin elasticsearch.mifos.gazelle.test kibana.mifos.gazelle.test mongoexpress.mifos.gazelle.test \
+         kafkaconsole.mifos.gazelle.test fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test 
 
 # Windows (C:\Windows\System32\drivers\etc\hosts)
-<VM-IP> vnextadmin.local
-<VM-IP> elasticsearch.local
-<VM-IP> kibana.local
-<VM-IP> mongoexpress.local
-<VM-IP> kafkaconsole.local
-<VM-IP> fspiop.local
-<VM-IP> bluebank.local
-<VM-IP> greenbank.local
+<VM-IP> vnextadmin.mifos.gazelle.test
+<VM-IP> elasticsearch.mifos.gazelle.test
+<VM-IP> kibana.mifos.gazelle.test
+<VM-IP> mongoexpress.mifos.gazelle.test
+<VM-IP> kafkaconsole.mifos.gazelle.test
+<VM-IP> fspiop.mifos.gazelle.test
+<VM-IP> bluebank.mifos.gazelle.test
+<VM-IP> greenbank.mifos.gazelle.test
 ```
 
 ### Accessing Payment Hub EE
