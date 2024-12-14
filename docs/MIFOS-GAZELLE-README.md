@@ -164,6 +164,7 @@ Add the following entries to your hosts file on the laptop/desktop system where 
 ```
 
 ### Accessing MifosX
+By default the Mifos Gazelle installation only loads the "default" tenant into the database even though greenbank and bluebank are configured into the web client so when logging into Mifos use the default tenant and the default user=mifos and password=password.  See [ Adding tenants to MifosX](#adding-tenants-to-mifosx) for instructions on adding tenants to MifosX database. To change the options for tenants in the web client , modify the FINERACT_PLATFORM_TENANTS_IDENTIFIER in ../src/repos/mifosx/kubernbetes/web-app-deployment.yaml file and redeploy the mifosx app using the Mifos Gazelle run.sh and the -a flag. 
 
 #### Host Configuration
 

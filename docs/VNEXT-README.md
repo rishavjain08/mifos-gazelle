@@ -1,7 +1,7 @@
 # Mifos Gazelle - standalone deployment of vNext Beta1
 
 ## Overview
- Mifos Gazelle as well as deploying MifosX, PaymentHub EE and vNext together also enables complete stand-alone deployment of vNext Beta1 this can serve as a useful tool for focussed vNext standalone testing and experimentation. For those familiar with mini-loop installation of vNext, Mifos Gazelle provides exactly the same function with the advantage that Mifos Gazelle is under active development.    
+ Mifos Gazelle enables complete stand-alone deployment of vNext Beta1 this can serve as a useful tool for focussed vNext standalone testing and experimentation. For those familiar with mini-loop installation of vNext, Mifos Gazelle provides exactly the same function with the advantage that Mifos Gazelle is under active development.    
 
 ## vNext standalone installation using Mifos Gazelle  
 This is exactly the same process as for any Mifos Gazelle deployment but we use the -a flag as described in the main Mifos Gazelle README
