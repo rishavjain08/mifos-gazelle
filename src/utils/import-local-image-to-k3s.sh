@@ -2,6 +2,7 @@
 # publish local image to k3s kubernetes
 # Author: Tom Daly
 # Date: Oct 2024
+# Mainly useful for dev/test of Mifos Gazelle components
 
 # Default values
 IMAGE_NAME=""
