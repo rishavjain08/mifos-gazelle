@@ -658,11 +658,6 @@ function vnext_configure_ttk {
 
 function deployvNext() {
   printf "\n==> Deploying Mojaloop vNext application \n"
-  # echo "INFRA NS is $INFRA_NAMESPACE"
-  # echo "MOGOD IMPORT DIR is $MONGO_DATA_DIR"
-  #vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
-  #vnext_configure_ttk $VNEXT_TTK_FILES_DIR $VNEXT_NAMESPACE
-  #exit 
 
   if [[ "$(isDeployed "vnext" )" == "true" ]]; then
     if [[ "$redeploy" == "false" ]]; then
@@ -674,12 +669,13 @@ function deployvNext() {
   fi 
   createNamespace "$VNEXT_NAMESPACE"
   cloneRepo "$VNEXTBRANCH" "$VNEXT_REPO_LINK" "$APPS_DIR" "$VNEXTREPO_DIR"
+  # remove the TTK-CLI pod as it is not needed and comes up in error mode 
+  rm  "$APPS_DIR/$VNEXTREPO_DIR/packages/installer/manifests/ttk/ttk-cli.yaml"
+
   configurevNext  # make any local mods to manifests
   vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
-
   for index in "${!VNEXT_LAYER_DIRS[@]}"; do
     folder="${VNEXT_LAYER_DIRS[index]}"
-    #echo "Deploying files in $folder"
     applyKubeManifests "$folder" "$VNEXT_NAMESPACE" >/dev/null 2>&1
     if [ "$index" -eq 0 ]; then
       echo -e "${BLUE}    Waiting for vnext cross cutting concerns to come up${RESET}"
