@@ -40,23 +40,6 @@ ph-ee-engine:
     ingress:
       enabled: false
       className: nginx
-      # annotations:
-      #   kubernetes.io/ingress.class: nginx
-      #   nginx.ingress.kubernetes.io/cors-allow-headers: 'platform-tenantid'
-      #   nginx.ingress.kubernetes.io/cors-allow-methods: PUT, GET, POST, OPTIONS, DELETE
-      #   nginx.ingress.kubernetes.io/cors-allow-origin: '*'
-      #   nginx.ingress.kubernetes.io/enable-cors: "true"
-      # # tls:
-      # #   - secretName: sandbox-secret
-      # hosts:
-      #   - host: ops-bk.mifos.gazelle.test
-      #     paths:
-      #     - path: "/"
-      #       backend:
-      #         service:
-      #           name: "ph-ee-operations-app"
-      #           port:
-      #             number: 80
 
   operations_web:
     # Note 'fred' and 'FRED' are development hooks as we continue to work on end to end integration flows.

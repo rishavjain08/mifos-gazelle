@@ -30,7 +30,7 @@ tar -xzf "$tmp_dir/k9s.tar.gz" -C "$tmp_dir"
 
 # Move k9s to the user's bin directory (assuming it's named k9s after extraction)
 mkdir -p "$HOME/local/bin"
-mv "$tmp_dir/k9s" "$HOME/bin"
+mv "$tmp_dir/k9s" "$HOME/bin/k9s"
 
 # Echo the path to add to bashrc
 echo "To use k9s, add the following line to your .bashrc:"
