@@ -20,12 +20,12 @@
 - [Running helm test](#helm-test)
 - [Development Status](#development-status)
 - [Known Issues](#known-issues)
-- [Release notes]
+- [Release notes](#release-version-info-for-mifos-gazelle-v1.0.0)
 
 ## Goal of Mifos Gazelle
 The aim of Mifos Gazelle is to provide a trivially simple installation and configuration mechanism for DPGs as part of a DPI construct.  Initially this is focussed on Mifos applications for Core-Banking and Payment Orchestration and the Mojaloop vNext financial transactions switch. The idea is to create a rapidly deployable , understandable and cheap integration to serve as a showcase and a laboratory environment to enable others to build further on these DPI projects. As the project continues we have a roadmap of additional DPGs, demo cases and other features we want to implement, along with looking at how it could be used for production in-cloud and on-premise deployments.
 
-IMPORTANT NOTE: As Mifos-Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for v1.0.0. release we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status as not occurred yet.
+IMPORTANT NOTE: As Mifos-Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for v1.0.0. release we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status has not occurred yet.
 
 ## Gazelle features (benefits)
 - Mifos Gazelle installs each or all 3 DPGs in a reliable , repeatable way using simple bash scripts. 
@@ -131,7 +131,7 @@ sudo ./run.sh -u $USER -m cleanapps -a vnext   # Remove vNext switch
 ```
 
 ## Accessing Deployed Applications (DPGs) 
-Add the following entries to your hosts file on the laptop/desktop system where your web browser is running where <VM-IP> (without the angle brackets) is the IP of the server or VM where Mifos Gazelle has been deployed. If your browser is running on Linux or MacOS then all hosts entries go on one line , if your browser is running on Windows then you need a seperate line for each entry. 
+Add the following entries to your hosts file on the laptop/desktop system where your web browser is running where <VM-IP> (without the angle brackets) is the IP of the server or VM where Mifos Gazelle has been deployed. If your browser is running on Linux or MacOS then all hosts entries go on one line , if your browser is running on Windows then you need a separate line for each entry. 
 
 Once you have added the hosts below for the DPGs you can access consoles with
 - MifosX : http://mifos.mifos.gazelle.test
@@ -200,10 +200,10 @@ You can access the results by copying them from the pod to the /tmp directory of
 By default MifosGazelle deploys MifosX with a single tenant called "default"
 the process to add tenants to a MifosGazelle deployed MifosX deployment is a 2 part process 
 1. modify the example tenant configuration file mifos-gazelle/config/mifos-tenant-config.csv for your chosen tenant names 
-2. apply the example tenant configuration to add the new tenants by runnning (for example) ``` mifos-gazelle/src/utils/utils/update-mifos-tenants.sh -f ./config/mifos-tenant-config.csv ```
+2. apply the example tenant configuration to add the new tenants by running (for example) ``` mifos-gazelle/src/utils/utils/update-mifos-tenants.sh -f ./config/mifos-tenant-config.csv ```
 3. in k9s locate and kill the fineract-server process in the MifosX namespace (use ```ctrl-k ``` from k9s) it will automatically be restarted by kubernetes. 
 When fineract-server is restarted the new tenants schemas tables and artefacts will be created. You can check the progress of the schema generation by looking at the fineract-server pod logs.  Still using k9s, again locate the new fineract-server pod and press  ```l``` for logs when that pod is highlighted.  
-4. Once the new fineract-server pod has finished crreating the new schema , you can test this by logging in to the MifosX web-client using that tenant. 
+4. Once the new fineract-server pod has finished creating the new schema , you can test this by logging in to the MifosX web-client using that tenant. 
 
 ## Development Status
 Please note that limitations here are entirely those of the Mifos Gazelle configuration, and should not at all be interpreted as issues with the maturity or functionality of the deployed DPGs.  
@@ -229,7 +229,7 @@ Please note that limitations here are entirely those of the Mifos Gazelle config
 - There are some issues on older (Intel/Opteron) hardware with nginx, MongoDB  and ElasticSearch. 
 - Reminder Mifos Gazelle deployment of the 3 DPGs is *not at all secure*. (Note this is true no matter of the security status of the underlying DPGs). Security will necessarily become a major focus as we look to more production ready deployments in future releases. 
 
-## release version info for Mifos Gazelle v1.0.0
+## Release version info for Mifos Gazelle v1.0.0
 MifosX : i.e. Mifos and Mifos web-client uses docker container openmf/fineract:develop 
 vNext : vNext Beta1 release from https://github.com/mojaloop/platform-shared-tools/blob/beta1/README.md
 PaymentHub EE : v1.13.0 subcharts and versions as documented at https://mifos.gitbook.io/docs/payment-hub-ee/release-notes/v1.13.0 but with the following exceptions :-
