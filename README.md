@@ -4,16 +4,13 @@
 
 ## Quick Links
 - [Mifos Gazelle README](docs/MIFOS-GAZELLE-README.md) - Deploy and run MifosX, Mifos Payment Hub EE and vNext 
-- [Postman Testing](docs/POSTMAN.md) - Running Postman collections 
 - [vNext README](docs/VNEXT-README.md) - Deploy and run vNext on its own
-
-
 
 ## Overview
 This repository contains the Mifos Gazelle deployment utilities
 
 ## Getting Started
-1. Review the [Mifos Gazelle README](docs/MIFOS-GAZELLE-README.md) for detailed installation instructions
+1. Review the [Mifos Gazelle README](docs/MIFOS-GAZELLE-README.md) for detailed usage and installation instructions
 2. Follow the prerequisites and system requirements
 
 
