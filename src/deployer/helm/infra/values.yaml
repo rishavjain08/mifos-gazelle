@@ -97,7 +97,7 @@ redpanda-console:
     enabled: true
     className: nginx
     hosts:
-      - host: redpanda-console.local
+      - host: redpanda-console.mifos.gazelle.test
         paths:
           - path: /
             pathType: ImplementationSpecific
@@ -133,9 +133,16 @@ mongo-express:
   fullnameOverride: mongo-express
   enabled: true
 
+  image:
+    tag: 1.0.2
+
   ingress:
     enabled: true
     ingressClassName: nginx
+    hosts:
+      - host: mongoexpress.mifos.gazelle.test
+        paths:
+          - /
 
   mongodbEnableAdmin: true
   mongodbAdminPassword: mongoDbPas42
@@ -183,6 +190,45 @@ elasticsearch:
     enabled: true
     # hostname: es01
 
+kibana:
+  enabled: true
+  imageTag: 7.16.3
+  fullnameOverride: "ph-ee-kibana"
+  elasticsearchHosts: "http://ph-ee-elasticsearch:9200/"
+  protocol: http
+  kibanaConfig:
+    kibana.yml: |
+      monitoring.enabled: false
+      xpack.encryptedSavedObjects.encryptionKey: 5f4dcc3b5aa765d61d8327deb882cf99
+      server.ssl:
+        enabled: false
+        key: /usr/share/kibana/config/certs/elastic-certificate.pem
+        certificate: /usr/share/kibana/config/certs/elastic-certificate.pem
+      xpack.security.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+      elasticsearch.ssl:
+        certificateAuthorities: /usr/share/kibana/config/certs/elastic-certificate.pem
+        verificationMode: certificate
+  secretMounts:
+    - name: elastic-certificate-pem
+      secretName: elastic-certificate-pem
+      path: /usr/share/kibana/config/certs
+  extraEnvs:
+    - name: 'ELASTICSEARCH_USERNAME'
+      valueFrom:
+        secretKeyRef:
+          name: elastic-credentials
+          key: username
+    - name: 'ELASTICSEARCH_PASSWORD'
+      valueFrom:
+        secretKeyRef:
+          name: elastic-credentials
+          key: password
+    - name: 'KIBANA_ENCRYPTION_KEY'
+      valueFrom:
+        secretKeyRef:
+          name: kibana
+          key: encryptionkey
+
 ############### MySQL  ####################
 mysql:
   fullnameOverride: "mysql"
@@ -191,27 +237,22 @@ mysql:
     database: "tenants"
     username: "mifos"
     password: "password"
-    rootPassword: "ethieTieCh8ahv"
+    rootPassword: "mysqlpw"
+    # rootPassword: "ethieTieCh8ahv"
   image:
     tag: "5.7"
     debug: false
   initdbScripts:
     setup.sql: |-
-      CREATE DATABASE messagegateway;
-      CREATE DATABASE `rhino`;
-      CREATE DATABASE `gorilla`;
-      CREATE DATABASE `lion`;
-      CREATE DATABASE `identity_account_mapper`;
-      CREATE DATABASE `voucher_management`;
-      GRANT ALL PRIVILEGES ON `rhino`.* TO 'mifos';
-      GRANT ALL PRIVILEGES ON `gorilla`.* TO 'mifos';
-      GRANT ALL PRIVILEGES ON `lion`.* TO 'mifos';
-      GRANT ALL ON *.* TO 'root'@'%';
+      CREATE DATABASE IF NOT EXISTS messagegateway;
+      CREATE DATABASE IF NOT EXISTS `identity_account_mapper`;
+      CREATE DATABASE IF NOT EXISTS `voucher_management`;
+      CREATE DATABASE IF NOT EXISTS `fineract_tenants`;
+      CREATE DATABASE IF NOT EXISTS `fineract_default`;
       GRANT ALL PRIVILEGES ON messagegateway.* TO 'mifos';
       GRANT ALL PRIVILEGES ON `identity_account_mapper`.* TO 'mifos';
       GRANT ALL PRIVILEGES ON `voucher_management`.* TO 'mifos';
-      CREATE DATABASE IF NOT EXISTS `fineract_tenants`;
-      CREATE DATABASE IF NOT EXISTS `fineract_default`;
-      GRANT ALL ON *.* TO 'root'@'%';
       GRANT ALL PRIVILEGES ON `fineract_tenants`.* TO 'mifos';
       GRANT ALL PRIVILEGES ON `fineract_default`.* TO 'mifos';
+      GRANT ALL ON *.* TO 'root'@'%';
+
