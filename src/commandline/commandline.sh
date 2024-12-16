@@ -19,7 +19,7 @@ USAGE: $0 -m [mode] -u [user] -a [apps] -e [environment] -d [true/false]
 Example 1 : sudo $0 -m deploy -u \$USER -d true     # install mifos-gazelle with debug mode and user \$USER
 Example 2 : sudo $0 -m cleanapps -u \$USER -d true  # delete apps, leave environment with debug mode and user \$USER
 Example 3 : sudo $0 -m cleanall -u \$USER           # delete all apps, all Kubernetes artifacts, and server
-Example 4 : sudo $0 -m deploy -u \$USER -a phee       # install PHEE only, user \$USER
+Example 4 : sudo $0 -m deploy -u \$USER -a phee     # install PHEE only, user \$USER
 Example 5 : sudo $0 -m deploy -u \$USER -a all      # install all apps (vNext, PHEE, and MifosX) with user \$USER
 
 Options:
@@ -83,7 +83,6 @@ function getOptions {
             k) k8s_distro="${OPTARG}" ;;
             d) debug="${OPTARG}" ;;
             a) apps="${OPTARG}" ;;
-            f) mifosx_instances="${OPTARG}" ;;
             e) environment="${OPTARG}" ;;
             v) k8s_user_version="${OPTARG}" ;;
             u) k8s_user="${OPTARG}" ;;

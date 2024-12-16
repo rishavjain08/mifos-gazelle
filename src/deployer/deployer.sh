@@ -693,20 +693,10 @@ function deployvNext() {
 
 function DeployMifosXfromYaml() {
   manifests_dir=$1
-  num_instances="1"
-  #num_instances=$2
-  # TODO re implement multiple instances of MifosX deployment in different 
-  #      namespaces. In the move away from the helm charts to the simple yamls 
-  #      I (Tom D) temporarily hardcoded this just so we could get something working
-  #      NOTE: MifosX i.e. web-app + fineract could easily be deoloyed from a 
-  #            kubernetes operator and thus multiple deployments would be a simple
-  #            part of that process. 
   echo "==> Deploying MifosX i.e. web-app and Fineract via application manifests"
-  createNamespace "$MIFOSX_NAMESPACE-$num_instances"
+  createNamespace "$MIFOSX_NAMESPACE"
   cloneRepo "$MIFOSX_BRANCH" "$MIFOSX_REPO_LINK" "$APPS_DIR" "$MIFOSX_REPO_DIR"
-
-  #echo "Deploying files in $manifests_dir"
-  applyKubeManifests "$manifests_dir" "$MIFOSX_NAMESPACE-$num_instances"
+  applyKubeManifests "$manifests_dir" "$MIFOSX_NAMESPACE"
 
   echo -e "\n${GREEN}====================================="
   echo -e "MifosX (fineract + web app) Deployed"
@@ -731,13 +721,12 @@ function printEndMessage {
   echo -e "=================================\n\n"
   echo -e "CHECK DEPLOYMENTS USING kubectl"
   echo -e "kubectl get pods -n vnext #For testing mojaloop vNext"
-  echo -e "kubectl get pods -n paymenthub #For testing paymenthub"
-  echo -e "kubectl get pods -n mifosx #For testing MifosX x is a number of a MifosX instances"
+  echo -e "kubectl get pods -n paymenthub #For testing PaymentHub EE "
+  echo -e "kubectl get pods -n mifosx # for testing MifosX"
   echo -e "or install k9s by executing ./src/utils/install-k9s.sh <cr> in this terminal window\n\n"
 }
 
 function deleteApps {
-  mifosx_num_instances="$1"
   appsToDelete="$2"
   if [[ "$appsToDelete" == "all" ]]; then
     deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
@@ -769,7 +758,6 @@ function deleteApps {
 }
 
 function deployApps {
-  mifosx_num_instances="$1"
   appsToDeploy="$2"
   redeploy="$3"
 
@@ -780,7 +768,7 @@ function deployApps {
     deployInfrastructure "$redeploy" 
     deployvNext
     deployPH
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"  "$mifosx_num_instances"
+    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
   elif [[ "$appsToDeploy" == "infra" ]];then
     deployInfrastructure
   elif [[ "$appsToDeploy" == "vnext" ]];then
@@ -792,7 +780,7 @@ function deployApps {
       deleteApps 1 "mifosx"
     fi 
     deployInfrastructure "false"
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"  "$mifosx_num_instances"
+    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
     # here we need to add the second tenant to the mysql database 
     # this is how to check to see how many rows are in a schema 
     # can use this to determine when mifos has finished creating tables 
@@ -803,7 +791,7 @@ function deployApps {
     # kubectl -n $INFRA_NAMESPACE exec  mysql-0 
     # TODO: add the automation above BUT for now use 
     #       src/utils/update-mifos-tenants.sh and do this after run.sh has completed and pods are up
-    #       NOTE: the reason I am hesitating to add this now is the time it takes then for the fineract-server pod to come online 
+    #       NOTE: the reason I am hesitating to add this now i.e. v1.0.0 is the time it takes then for the fineract-server pod to come online 
     #             I need to see what the perf hit is *also* I am thiking we should simply export/import the mysql database 
     #             as part of the infra startup
 
