@@ -2,7 +2,7 @@
 
 [![Mifos](https://img.shields.io/badge/Mifos-Gazelle-blue)](https://github.com/openMF/mifos-gazelle)
 
-> Deployment utilities for MifosX, Payment Hub EE (PH-EE), and Mojaloop vNext (as of October 2024)
+> Deployment utilities for MifosX, Payment Hub EE (PH-EE), and Mojaloop vNext ( December  2024 )
 
 ## Table of Contents
 - [Goal](#goal-of-mifos-gazelle)
@@ -20,16 +20,17 @@
 - [Running helm test](#helm-test)
 - [Development Status](#development-status)
 - [Known Issues](#known-issues)
+- [Release notes]
 
 ## Goal of Mifos Gazelle
-The overall aim of Mifos Gazelle is to provide a trivially simple installation and configuration mechanism for DPGs as part of a DPI construct.  Initially this is focussed on Mifos applications for Core-Banking and Payment Orchestration and the Mojaloop vNext financial transactions switch. The idea is to create a rapidly deployable , understandable and cheap integration to serve as a showcase and a laboratory environment to enable others to build further on these DPI projects. As the project continues we have a roadmap of additional DPGs, demo cases, and other features we want to implement, along with looking at how it could be used for production in-cloud and on-premise deployments.
+The aim of Mifos Gazelle is to provide a trivially simple installation and configuration mechanism for DPGs as part of a DPI construct.  Initially this is focussed on Mifos applications for Core-Banking and Payment Orchestration and the Mojaloop vNext financial transactions switch. The idea is to create a rapidly deployable , understandable and cheap integration to serve as a showcase and a laboratory environment to enable others to build further on these DPI projects. As the project continues we have a roadmap of additional DPGs, demo cases and other features we want to implement, along with looking at how it could be used for production in-cloud and on-premise deployments.
 
-IMPORTANT NOTE: As Mifos-Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for release 1.0.0. we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status as not occurred yet.
+IMPORTANT NOTE: As Mifos-Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for v1.0.0. release we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status as not occurred yet.
 
 ## Gazelle features (benefits)
 - Mifos Gazelle installs each or all 3 DPGs in a reliable , repeatable way using simple bash scripts. 
 - The bash scripts are designed to enable developers to understand and modify the configuration of each or all products.
-- Install of all 3 products is quick 15 mins or less with reasonable hardware
+- Enables installation of all 3 products is quick 15 mins or less with reasonable hardware
 Fully functioning MifosX , with the addition of tools to simply add additional tenants
 Fully functioning vNext (beta1) with integrated demo and test environment, admin UI and pre-loaded demo data
 Installed and partially configured PHEE with deployed Web Client(note: see limitations under development status)
@@ -43,6 +44,12 @@ Before proceeding with the deployment, ensure your system meets the following re
 - 32GB RAM minimum
 - 30GB+ free space in home directory
 - Non-root user with sudo privileges
+
+Note regarding memory use : 
+1. If you are installing just MifosX or just vNext then much less memory is required.
+
+
+
 
 ## Quick Start
 logged in as non-root user e.g. mifosu user 
@@ -75,10 +82,9 @@ sudo ./run.sh -u $USER -m deploy -d true -a all
 | `-m` | Execution mode | `deploy`, `cleanapps`, `cleanall` |
 | `-d` | Verbose output | `true`, `false` |
 | `-a` | Applications to deploy | `all`, `vnext`, `mifosx`, `phee` |
-| `-f` | Number of MifosX instances* | Default: 1 |
 | `-e` | Deployment environment* | `local`, `remote` |
 
-> *Note: `-f` and `-e` options are not currently implemented
+> *Note: `-e` option is not currently implemented.
 
 ## What to do next 
 After the run.sh has finished and ```kubectl get pods -A``` shows all pods and containers running then MifosGazelle has finished installing and is ready for use and testing.  Here are some suggestions for what to do next
@@ -124,33 +130,32 @@ sudo ./run.sh -u $USER -m cleanapps -a phee    # Remove PaymentHub EE
 sudo ./run.sh -u $USER -m cleanapps -a vnext   # Remove vNext switch
 ```
 
-## Accessing Deployed Applications
+## Accessing Deployed Applications (DPGs) 
+Add the following entries to your hosts file on the laptop/desktop system where your web browser is running where <VM-IP> (without the angle brackets) is the IP of the server or VM where Mifos Gazelle has been deployed. If your browser is running on Linux or MacOS then all hosts entries go on one line , if your browser is running on Windows then you need a seperate line for each entry. 
 
-### Accessing Mojaloop vNext
+Once you have added the hosts below for the DPGs you can access consoles with
+- MifosX : http://mifos.mifos.gazelle.test
+- vNext : http://vnextadmin.mifos.gazelle.test 
+- PaymentHub EE: http://ops.mifos.gazelle.test 
 
-#### Host Configuration
 
-Add the following entries to your hosts file on the laptop/desktop system where your web browser is running where <VM-IP> (without the angle brackets) is the IP of the server or VM where Mifos Gazelle has been deployed. 
-
+### vNext host Configuration
 ```bash
-# Linux/MacOS (/etc/hosts)
-<VM-IP>  vnextadmin elasticsearch.local kibana.local mongoexpress.local \
-         kafkaconsole.local fspiop.local bluebank.local greenbank.local 
+# Linux/MacOS (/etc/hosts) 
+<VM-IP>  vnextadmin elasticsearch.mifos.gazelle.test kibana.mifos.gazelle.test mongoexpress.mifos.gazelle.test kafkaconsole.mifos.gazelle.test fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test 
 
 # Windows (C:\Windows\System32\drivers\etc\hosts)
-<VM-IP> vnextadmin.local
-<VM-IP> elasticsearch.local
-<VM-IP> kibana.local
-<VM-IP> mongoexpress.local
-<VM-IP> kafkaconsole.local
-<VM-IP> fspiop.local
-<VM-IP> bluebank.local
-<VM-IP> greenbank.local
+<VM-IP> vnextadmin.mifos.gazelle.test
+<VM-IP> elasticsearch.mifos.gazelle.test
+<VM-IP> kibana.mifos.gazelle.test
+<VM-IP> mongoexpress.mifos.gazelle.test
+<VM-IP> kafkaconsole.mifos.gazelle.test
+<VM-IP> fspiop.mifos.gazelle.test
+<VM-IP> bluebank.mifos.gazelle.test
+<VM-IP> greenbank.mifos.gazelle.test
 ```
 
-### Accessing Payment Hub EE
-
-#### Host Configuration
+### Payment Hub EE host Configuration
 
 ```bash
 # Linux/MacOS (/etc/hosts)
@@ -162,8 +167,8 @@ Add the following entries to your hosts file on the laptop/desktop system where 
 <VM-IP> zeebe-operate.mifos.gazelle.test 
 
 ```
-
 ### Accessing MifosX
+By default the Mifos Gazelle installation only loads the "default" tenant into the database even though greenbank and bluebank are configured into the web client so when logging into Mifos use the default tenant and the default user=mifos and password=password.  See [ Adding tenants to MifosX](#adding-tenants-to-mifosx) for instructions on adding tenants to MifosX database. To change the options for tenants in the web client , modify the FINERACT_PLATFORM_TENANTS_IDENTIFIER in ../src/repos/mifosx/kubernbetes/web-app-deployment.yaml file and redeploy the mifosx app using the Mifos Gazelle run.sh and the -a flag. 
 
 #### Host Configuration
 
@@ -195,9 +200,10 @@ You can access the results by copying them from the pod to the /tmp directory of
 By default MifosGazelle deploys MifosX with a single tenant called "default"
 the process to add tenants to a MifosGazelle deployed MifosX deployment is a 2 part process 
 1. modify the example tenant configuration file mifos-gazelle/config/mifos-tenant-config.csv for your chosen tenant names 
-2. apply the example tenant configuration to add the new tenants by runnning ``` mifos-gazelle/src/update-mifos-tenants.sh ```
+2. apply the example tenant configuration to add the new tenants by runnning (for example) ``` mifos-gazelle/src/utils/utils/update-mifos-tenants.sh -f ./config/mifos-tenant-config.csv ```
 3. in k9s locate and kill the fineract-server process in the MifosX namespace (use ```ctrl-k ``` from k9s) it will automatically be restarted by kubernetes. 
-When fineract-server is restarted the new tenants schemas tables and artefacts will be created. You can check the fineract-server logs from k9s, again locate the new fineract-server pod and press  ```l``` for logs when that pod is highlighted.  
+When fineract-server is restarted the new tenants schemas tables and artefacts will be created. You can check the progress of the schema generation by looking at the fineract-server pod logs.  Still using k9s, again locate the new fineract-server pod and press  ```l``` for logs when that pod is highlighted.  
+4. Once the new fineract-server pod has finished crreating the new schema , you can test this by logging in to the MifosX web-client using that tenant. 
 
 ## Development Status
 Please note that limitations here are entirely those of the Mifos Gazelle configuration, and should not at all be interpreted as issues with the maturity or functionality of the deployed DPGs.  
@@ -207,6 +213,7 @@ Please note that limitations here are entirely those of the Mifos Gazelle config
 - There is a lot of tidying up to do once this is better tested, e.g. debug statements to remove and lots of redundant env vars to remove as well as commented out code to remove. 
 - It should be straightforward to integrate the Kubernetes operator work ( https://github.com/openMF/mifos-operators ) into this simplified single node deployment and this is planned for a future release 
 - vNext Beta1 functions and is tested on ARM64 there is a limitation on Raspberry Pi 4 (or less) with MongoDB due to requirement for ARMv8.2A. Whilst it is untested vNext Beta1 and its associated infrastructure layer deployed by Mifos Gazelle should "just work"  Use ```sudo ./run.sh -u <user> -m deploy -a vnext ``` on a clean install to try. In the future it should be straightforward and is planned to have MifosX and PaymentHub EE also working on ARM and Raspberry PI
+- reducing memory usage for demo and test is a high priority project, it is anticipated that the 3 initial DPGs can all run on 16GB or less (i.e. about  50% of the current prerequisite ) 
 
 
 ## Known Issues
@@ -221,3 +228,13 @@ Please note that limitations here are entirely those of the Mifos Gazelle config
 - The postman tests provided by the individual DPGs have not yet been fully adapted to the Mifos Gazelle deployment environment, again this will happen in future releases in a structure fashion. 
 - There are some issues on older (Intel/Opteron) hardware with nginx, MongoDB  and ElasticSearch. 
 - Reminder Mifos Gazelle deployment of the 3 DPGs is *not at all secure*. (Note this is true no matter of the security status of the underlying DPGs). Security will necessarily become a major focus as we look to more production ready deployments in future releases. 
+
+## release version info for Mifos Gazelle v1.0.0
+MifosX : i.e. Mifos and Mifos web-client uses docker container openmf/fineract:develop 
+vNext : vNext Beta1 release from https://github.com/mojaloop/platform-shared-tools/blob/beta1/README.md
+PaymentHub EE : v1.13.0 subcharts and versions as documented at https://mifos.gitbook.io/docs/payment-hub-ee/release-notes/v1.13.0 but with the following exceptions :-
+- ph-ee-env-template : docker.io/openmf/ph-ee-env-template:v1.13.0-gazelle
+- ph-ee-integration-test : docker.io/openmf/ph-ee-integration-test:v1.6.2-gazelle
+- ph-ee-operations-web : docker.io/openmf/openmf/ph-ee-operations-web:dev1
+
+

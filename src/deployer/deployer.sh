@@ -248,30 +248,6 @@ function cloneRepo() {
   fi
 }
 
-# function packageHelmCharts {
-#   current_dir=`pwd`
-#   cd $HOME/helm
-#   if [[ "$NEED_TO_REPACKAGE" == "true" ]]; then 
-#     tstart=$(date +%s)
-#     printf "==> running repackage of the all the Mojaloop helm charts to incorporate local configuration "
-#     status=`./package.sh >> $LOGFILE 2>>$ERRFILE`
-#     tstop=$(date +%s)
-#     telapsed=$(timer $tstart $tstop)
-#     timer_array[repackage_ml]=$telapsed
-#     if [[ "$status" -eq 0  ]]; then 
-#       printf " [ ok ] \n"
-#       NEED_TO_REPACKAGE="false"
-#     else
-#       printf " [ failed ] \n"
-#       printf "** please try running $HOME/helm/package.sh manually to determine the problem **  \n" 
-#       cd $current_dir
-#       exit 1
-#     fi  
-#   fi 
- 
-#   cd $current_dir
-# }
-
 function deleteResourcesInNamespaceMatchingPattern() {
     local pattern="$1"  
     # Check if the pattern is provided
@@ -328,16 +304,6 @@ function deployHelmChartFromDir() {
   # Check if a values file has been provided
   values_file="$4"
 
-  # Run helm dependency update to fetch dependencies
-  # echo "Updating Helm chart dependencies..."
-  # su - $k8s_user -c "helm dependency update" >> /dev/null 2>&1
-  # echo -e "==> Helm chart updated"
-
-  # # Run helm dependency build
-  # echo "Building Helm chart dependencies..."
-  # su - $k8s_user -c "helm dependency build ."  >> /dev/null 2>&1
-  # echo -e "==> Helm chart dependencies built"
-
   # TODO Determine whether to install or upgrade the chart also check whether to apply a values file
   #su - $k8s_user -c "helm list -n $namespace"
   if [ -n "$values_file" ]; then
@@ -348,7 +314,7 @@ function deployHelmChartFromDir() {
       su - $k8s_user -c "helm install $release_name $chart_dir -n $namespace "
   fi
 
-  # tomd todo : is the chart really deployed ok, need a test
+  # todo : is the chart really deployed ok, need a test
   # Use kubectl to get the resource count in the specified namespace
   resource_count=$(sudo -u $k8s_user kubectl get pods -n "$namespace" --ignore-not-found=true 2>/dev/null | grep -v "No resources found" | wc -l)
   # Check if the deployment was successful
@@ -528,28 +494,6 @@ function applyKubeManifests() {
     fi
 }
 
-# function runFailedSQLStatements(){
-#   echo "Fxing Operations App MySQL Race condition"
-#   operationsDeplName=$(kubectl get deploy --no-headers -o custom-columns=":metadata.name" -n $PH_NAMESPACE | grep operations-app)
-#   kubectl exec -it mysql-0 -n infra -- mysql -h mysql -uroot -pethieTieCh8ahv < src/deployer/setup.sql
-
-#   if [ $? -eq 0 ];then
-#     echo "SQL File execution successful"
-#   else 
-#     echo "SQL File execution failed"
-#     exit 1
-#   fi
-
-#   echo "Restarting Deployment for Operations App"
-#   kubectl rollout restart deploy/$operationsDeplName -n $PH_NAMESPACE
-
-#   if [ $? -eq 0 ];then
-#     echo "Deployment Restart successful"
-#   else 
-#     echo "Deployment Restart failed"
-#     exit 1
-#   fi
-# }
 
 function addKubeConfig(){
   K8sConfigDir="$k8s_user_home/.kube"
@@ -565,7 +509,6 @@ function addKubeConfig(){
 
 function vnext_restore_demo_data {
   local mongo_data_dir=$1
-  #echo $mongo_data_dir 
   local namespace=$2 
   printf "    restoring vNext mongodb demonstration/test data "
   mongopod=`kubectl get pods --namespace $namespace | grep -i mongodb |awk '{print $1}'` 
@@ -575,36 +518,6 @@ function vnext_restore_demo_data {
                --gzip --archive=/tmp/mongodump.gz --authenticationDatabase admin  >/dev/null 2>&1  
   printf " [ ok ] \n"
 }
-
-# function vnext_configure_ttk { 
-#   local ttk_files_dir=$1
-#   local namespace=$2 
-#   printf "\n==> configuring the testing toolkit  \n "
-#   bb_pod_status=`kubectl get pods bluebank-backend-0 --namespace $namespace  --no-headers 2>/dev/null | awk '{print $3}' `
-#   if [[ "$bb_pod_status" == "Running" ]]; then
-#     printf "   testing toolkit data and environment config " 
-#     ####   bluebank  ###
-#     ttk_pod_env_dest="/opt/app/examples/environments"
-#     ttk_pod_spec_dest="/opt/app/spec_files"
-#     kubectl cp $ttk_files_dir/environment/hub_local_environment.json bluebank-backend-0:$ttk_pod_env_dest/hub_local_environment.json --namespace $namespace
-#     kubectl cp $ttk_files_dir/environment/dfsp_local_environment.json bluebank-backend-0:$ttk_pod_env_dest/dfsp_local_environment.json --namespace $namespace
-#     kubectl cp $ttk_files_dir/spec_files/user_config_bluebank.json bluebank-backend-0:$ttk_pod_spec_dest/user_config.json --namespace $namespace
-#     kubectl cp $ttk_files_dir/spec_files/default.json bluebank-backend-0:$ttk_pod_spec_dest/rules_callback/default.json --namespace $namespace
-
-#     ####  greenbank  ###
-#     kubectl cp $ttk_files_dir/environment/hub_local_environment.json greenbank-backend-0:$ttk_pod_env_dest/hub_local_environment.json --namespace $namespace
-#     kubectl cp $ttk_files_dir/environment/dfsp_local_environment.json greenbank-backend-0:$ttk_pod_env_dest/dfsp_local_environment.json --namespace $namespace
-#     kubectl cp $ttk_files_dir/spec_files/user_config_greenbank.json greenbank-backend-0:$ttk_pod_spec_dest/user_config.json --namespace $namespace
-#     kubectl cp $ttk_files_dir/spec_files/default.json greenbank-backend-0:$ttk_pod_spec_dest/rules_callback/default.json --namespace $namespace
-
-#     if [[ ! $WARNING_IS_CURRENT == true ]]; then
-#       printf " [ ok ] \n"
-#     fi
-#   else 
-#     printf "    - ttk does not seem to be running so skipping TTK data and environment config (ttk does not yet run on arm64 from repo )\n" 
-#   fi 
-#   WARNING_IS_CURRENT=false  #clear current warning 
-# }
 
 function vnext_configure_ttk {
   local ttk_files_dir=$1
@@ -658,11 +571,6 @@ function vnext_configure_ttk {
 
 function deployvNext() {
   printf "\n==> Deploying Mojaloop vNext application \n"
-  # echo "INFRA NS is $INFRA_NAMESPACE"
-  # echo "MOGOD IMPORT DIR is $MONGO_DATA_DIR"
-  #vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
-  #vnext_configure_ttk $VNEXT_TTK_FILES_DIR $VNEXT_NAMESPACE
-  #exit 
 
   if [[ "$(isDeployed "vnext" )" == "true" ]]; then
     if [[ "$redeploy" == "false" ]]; then
@@ -674,12 +582,13 @@ function deployvNext() {
   fi 
   createNamespace "$VNEXT_NAMESPACE"
   cloneRepo "$VNEXTBRANCH" "$VNEXT_REPO_LINK" "$APPS_DIR" "$VNEXTREPO_DIR"
+  # remove the TTK-CLI pod as it is not needed and comes up in error mode 
+  rm  -f "$APPS_DIR/$VNEXTREPO_DIR/packages/installer/manifests/ttk/ttk-cli.yaml" 
+  
   configurevNext  # make any local mods to manifests
   vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
-
   for index in "${!VNEXT_LAYER_DIRS[@]}"; do
     folder="${VNEXT_LAYER_DIRS[index]}"
-    #echo "Deploying files in $folder"
     applyKubeManifests "$folder" "$VNEXT_NAMESPACE" >/dev/null 2>&1
     if [ "$index" -eq 0 ]; then
       echo -e "${BLUE}    Waiting for vnext cross cutting concerns to come up${RESET}"
@@ -697,20 +606,10 @@ function deployvNext() {
 
 function DeployMifosXfromYaml() {
   manifests_dir=$1
-  num_instances="1"
-  #num_instances=$2
-  # TODO re implement multiple instances of MifosX deployment in different 
-  #      namespaces. In the move away from the helm charts to the simple yamls 
-  #      I (Tom D) temporarily hardcoded this just so we could get something working
-  #      NOTE: MifosX i.e. web-app + fineract could easily be deoloyed from a 
-  #            kubernetes operator and thus multiple deployments would be a simple
-  #            part of that process. 
   echo "==> Deploying MifosX i.e. web-app and Fineract via application manifests"
-  createNamespace "$MIFOSX_NAMESPACE-$num_instances"
+  createNamespace "$MIFOSX_NAMESPACE"
   cloneRepo "$MIFOSX_BRANCH" "$MIFOSX_REPO_LINK" "$APPS_DIR" "$MIFOSX_REPO_DIR"
-
-  #echo "Deploying files in $manifests_dir"
-  applyKubeManifests "$manifests_dir" "$MIFOSX_NAMESPACE-$num_instances"
+  applyKubeManifests "$manifests_dir" "$MIFOSX_NAMESPACE"
 
   echo -e "\n${GREEN}====================================="
   echo -e "MifosX (fineract + web app) Deployed"
@@ -735,13 +634,12 @@ function printEndMessage {
   echo -e "=================================\n\n"
   echo -e "CHECK DEPLOYMENTS USING kubectl"
   echo -e "kubectl get pods -n vnext #For testing mojaloop vNext"
-  echo -e "kubectl get pods -n paymenthub #For testing paymenthub"
-  echo -e "kubectl get pods -n mifosx #For testing MifosX x is a number of a MifosX instances"
+  echo -e "kubectl get pods -n paymenthub #For testing PaymentHub EE "
+  echo -e "kubectl get pods -n mifosx # for testing MifosX"
   echo -e "or install k9s by executing ./src/utils/install-k9s.sh <cr> in this terminal window\n\n"
 }
 
 function deleteApps {
-  mifosx_num_instances="$1"
   appsToDelete="$2"
   if [[ "$appsToDelete" == "all" ]]; then
     deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
@@ -773,7 +671,6 @@ function deleteApps {
 }
 
 function deployApps {
-  mifosx_num_instances="$1"
   appsToDeploy="$2"
   redeploy="$3"
 
@@ -784,7 +681,7 @@ function deployApps {
     deployInfrastructure "$redeploy" 
     deployvNext
     deployPH
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"  "$mifosx_num_instances"
+    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
   elif [[ "$appsToDeploy" == "infra" ]];then
     deployInfrastructure
   elif [[ "$appsToDeploy" == "vnext" ]];then
@@ -796,7 +693,7 @@ function deployApps {
       deleteApps 1 "mifosx"
     fi 
     deployInfrastructure "false"
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"  "$mifosx_num_instances"
+    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
     # here we need to add the second tenant to the mysql database 
     # this is how to check to see how many rows are in a schema 
     # can use this to determine when mifos has finished creating tables 
@@ -807,7 +704,7 @@ function deployApps {
     # kubectl -n $INFRA_NAMESPACE exec  mysql-0 
     # TODO: add the automation above BUT for now use 
     #       src/utils/update-mifos-tenants.sh and do this after run.sh has completed and pods are up
-    #       NOTE: the reason I am hesitating to add this now is the time it takes then for the fineract-server pod to come online 
+    #       NOTE: the reason I am hesitating to add this now i.e. v1.0.0 is the time it takes then for the fineract-server pod to come online 
     #             I need to see what the perf hit is *also* I am thiking we should simply export/import the mysql database 
     #             as part of the infra startup
 

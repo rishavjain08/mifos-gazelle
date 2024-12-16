@@ -13,24 +13,24 @@ sudo ./postman_setup.sh <IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS> -o <true/false>
 
 The `-o` flag is optional and is used to override the existing host entry in /etc/hosts file. If you want to override the existing host entry, then you can pass `true` as the value of the flag, otherwise you can pass `false`.
 
-NOTE: This script is intended to be run on a Linux system, specifically Ubuntu 22.04.4. If you are running on a different system, you can follow the steps below to setup the postman collections.
+NOTE: This script is intended to be run on a Linux system, specifically Ubuntu 22.04 or 24.02 If you are running on a different system, you can follow the steps below to setup the postman collections.
 
 ## Step 1: Adding Hosts
 Add the following hosts to your host file on your system:
 
 `Mojaloop Hosts`
 ```bash
-IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS vnextadmin.local elasticsearch.local kibana.local mongoexpress.local kafkaconsole.local fspiop.local bluebank.local greenbank.local mifos.local
+IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS vnextadmin.local elasticsearch.mifos.gazelle.test kibana.mifos.gazelle.test mongoexpress.mifos.gazelle.test kafkaconsole.mifos.gazelle.test fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test mifos.mifos.gazelle.test
 ```
 
 `Payment Hub EE Hosts`
 ```bash
-IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS ops.local ops-bk.local bulk-connector.local messagegateway.local minio.local ams-mifos.local bill-pay.local channel.local channel-gsma.local crm.local mockpayment.local mojaloop.local identity-mapper.local analytics.local vouchers.local zeebeops.local notifications.local
+IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS ops.mifos.gazelle.test ops-bk.mifos.gazelle.test bulk-connector.mifos.gazelle.test messagegateway.mifos.gazelle.test minio.mifos.gazelle.test ams-mifos.mifos.gazelle.test bill-pay.mifos.gazelle.test channel.mifos.gazelle.test channel-gsma.mifos.gazelle.test crm.mifos.gazelle.test mockpayment.mifos.gazelle.test mojaloop.mifos.gazelle.test identity-mapper.mifos.gazelle.test analytics.mifos.gazelle.test vouchers.mifos.gazelle.test zeebeops.mifos.gazelle.test notifications.mifos.gazelle.test
 ```
 
 `MifosX Hosts`
 ```bash
-IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS mifos.local
+IP_OF_YOUR_VM/IP_OF_YOUR_INGRESS mifos.mifos.gazelle.test
 ```
 
 NOTE: If you want detailed steps on how to configure your hosts, you may go through the `ACCESSING DEPLOYED APPLICATIONS` section of the [MIFOS-GAZELLE-README](MIFOS-GAZELLE-README.md).

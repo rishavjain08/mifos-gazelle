@@ -1,4 +1,8 @@
 #!/bin/bash
+# get all pod logs from the deployed applications
+# copy them from the pods and put into a 
+# temporary directory in /tmp
+# this enables easy access to all pod logs
 
 # Set variables
 NAMESPACE="paymenthub"
