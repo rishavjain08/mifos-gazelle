@@ -1,4 +1,4 @@
-# PaymentHubEE API Testing with JMeter
+# PaymentHubEE API Testing with JMeter (WIP)
 
 This README provides instructions on how to set up and run the JMeter test plan for testing the APIs of PaymentHubEE. The test plan allows you to simulate multiple users, configure which APIs to test, and analyze the performance of the APIs.
 

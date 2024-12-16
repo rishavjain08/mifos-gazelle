@@ -12,7 +12,7 @@
 - [Application Deployment Modes](#application-deployment-modes)
 - [Cleanup](#cleanup)
 - [What to do next](#what-to-do-next)
-- [Accessing Deployed Applications](#accessing-deployed-applications)
+- [Accessing Deployed Applications](#accessing-deployed-applications-dpgs)
   - [Mojaloop vNext](#accessing-mojaloop-vnext)
   - [Payment Hub](#accessing-payment-hub-EE)
   - [MifosX](#accessing-mifosx)
@@ -20,7 +20,7 @@
 - [Running helm test](#helm-test)
 - [Development Status](#development-status)
 - [Known Issues](#known-issues)
-- [Release notes]
+- [Version Information](#version-information)
 
 ## Goal of Mifos Gazelle
 The aim of Mifos Gazelle is to provide a trivially simple installation and configuration mechanism for DPGs as part of a DPI construct.  Initially this is focussed on Mifos applications for Core-Banking and Payment Orchestration and the Mojaloop vNext financial transactions switch. The idea is to create a rapidly deployable , understandable and cheap integration to serve as a showcase and a laboratory environment to enable others to build further on these DPI projects. As the project continues we have a roadmap of additional DPGs, demo cases and other features we want to implement, along with looking at how it could be used for production in-cloud and on-premise deployments.
@@ -47,9 +47,6 @@ Before proceeding with the deployment, ensure your system meets the following re
 
 Note regarding memory use : 
 1. If you are installing just MifosX or just vNext then much less memory is required.
-
-
-
 
 ## Quick Start
 logged in as non-root user e.g. mifosu user 
@@ -82,9 +79,7 @@ sudo ./run.sh -u $USER -m deploy -d true -a all
 | `-m` | Execution mode | `deploy`, `cleanapps`, `cleanall` |
 | `-d` | Verbose output | `true`, `false` |
 | `-a` | Applications to deploy | `all`, `vnext`, `mifosx`, `phee` |
-| `-e` | Deployment environment* | `local`, `remote` |
 
-> *Note: `-e` option is not currently implemented.
 
 ## What to do next 
 After the run.sh has finished and ```kubectl get pods -A``` shows all pods and containers running then MifosGazelle has finished installing and is ready for use and testing.  Here are some suggestions for what to do next
@@ -214,6 +209,7 @@ Please note that limitations here are entirely those of the Mifos Gazelle config
 - It should be straightforward to integrate the Kubernetes operator work ( https://github.com/openMF/mifos-operators ) into this simplified single node deployment and this is planned for a future release 
 - vNext Beta1 functions and is tested on ARM64 there is a limitation on Raspberry Pi 4 (or less) with MongoDB due to requirement for ARMv8.2A. Whilst it is untested vNext Beta1 and its associated infrastructure layer deployed by Mifos Gazelle should "just work"  Use ```sudo ./run.sh -u <user> -m deploy -a vnext ``` on a clean install to try. In the future it should be straightforward and is planned to have MifosX and PaymentHub EE also working on ARM and Raspberry PI
 - reducing memory usage for demo and test is a high priority project, it is anticipated that the 3 initial DPGs can all run on 16GB or less (i.e. about  50% of the current prerequisite ) 
+- The performance testing is still WIP and not fully operational 
 
 
 ## Known Issues
@@ -229,9 +225,9 @@ Please note that limitations here are entirely those of the Mifos Gazelle config
 - There are some issues on older (Intel/Opteron) hardware with nginx, MongoDB  and ElasticSearch. 
 - Reminder Mifos Gazelle deployment of the 3 DPGs is *not at all secure*. (Note this is true no matter of the security status of the underlying DPGs). Security will necessarily become a major focus as we look to more production ready deployments in future releases. 
 
-## release version info for Mifos Gazelle v1.0.0
+## Version information 
 MifosX : i.e. Mifos and Mifos web-client uses docker container openmf/fineract:develop 
-vNext : vNext Beta1 release from https://github.com/mojaloop/platform-shared-tools/blob/beta1/README.md
+vNext : vNext Beta1 release details see https://github.com/mojaloop/platform-shared-tools/blob/beta1/README.md
 PaymentHub EE : v1.13.0 subcharts and versions as documented at https://mifos.gitbook.io/docs/payment-hub-ee/release-notes/v1.13.0 but with the following exceptions :-
 - ph-ee-env-template : docker.io/openmf/ph-ee-env-template:v1.13.0-gazelle
 - ph-ee-integration-test : docker.io/openmf/ph-ee-integration-test:v1.6.2-gazelle

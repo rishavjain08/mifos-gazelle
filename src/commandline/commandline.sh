@@ -83,7 +83,6 @@ function getOptions {
             k) k8s_distro="${OPTARG}" ;;
             d) debug="${OPTARG}" ;;
             a) apps="${OPTARG}" ;;
-            e) environment="${OPTARG}" ;;
             v) k8s_user_version="${OPTARG}" ;;
             u) k8s_user="${OPTARG}" ;;
             r) redeploy="${OPTARG}" ;;
