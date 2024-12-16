@@ -214,6 +214,7 @@ Please note that limitations here are entirely those of the Mifos Gazelle config
 - It should be straightforward to integrate the Kubernetes operator work ( https://github.com/openMF/mifos-operators ) into this simplified single node deployment and this is planned for a future release 
 - vNext Beta1 functions and is tested on ARM64 there is a limitation on Raspberry Pi 4 (or less) with MongoDB due to requirement for ARMv8.2A. Whilst it is untested vNext Beta1 and its associated infrastructure layer deployed by Mifos Gazelle should "just work"  Use ```sudo ./run.sh -u <user> -m deploy -a vnext ``` on a clean install to try. In the future it should be straightforward and is planned to have MifosX and PaymentHub EE also working on ARM and Raspberry PI
 - reducing memory usage for demo and test is a high priority project, it is anticipated that the 3 initial DPGs can all run on 16GB or less (i.e. about  50% of the current prerequisite ) 
+- The performance testing is still WIP and not fully operational 
 
 
 ## Known Issues
