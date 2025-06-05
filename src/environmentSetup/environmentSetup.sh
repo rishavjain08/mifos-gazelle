@@ -155,7 +155,7 @@ function add_hosts {
 
     PHEEHOSTS=(  ops.mifos.gazelle.test ops-bk.mifos.gazelle.test \
                  bulk-connector.mifos.gazelle.test messagegateway.mifos.gazelle.test \
-                 minio.mifos.gazelle.test ams-mifos.mifos.gazelle.test \
+                 minio-console.mifos.gazelle.test  \
                  bill-pay.mifos.gazelle.test channel.mifos.gazelle.test \
                  channel-gsma.mifos.gazelle.test crm.mifos.gazelle.test \
                  mockpayment.mifos.gazelle.test mojaloop.mifos.gazelle.test \
@@ -166,7 +166,7 @@ function add_hosts {
 
     MIFOSXHOSTS=( mifos.mifos.gazelle.test fineract.mifos.gazelle.test ) 
 
-    ALLHOSTS=( "127.0.0.1" "localhost" "${PHEEHOSTS[@]}" "${VNEXTHOSTS[@]}"  )
+    ALLHOSTS=( "127.0.0.1" "localhost" "${MIFOSXHOSTS[@]}" "${PHEEHOSTS[@]}" "${VNEXTHOSTS[@]}"  )
 
     export ENDPOINTS=`echo ${ALLHOSTS[*]}`
     # remove any existing extra hosts from 127.0.0.1 entry in localhost 
@@ -547,8 +547,8 @@ function envSetupMain {
     K8S_VERSION=""
 
     HELM_VERSION="3.12.0"  # Feb 2023
-    OS_VERSIONS_LIST=( 20 22 )
-    K8S_CURRENT_RELEASE_LIST=( "1.29" "1.30" )
+    OS_VERSIONS_LIST=( 22 24 )
+    K8S_CURRENT_RELEASE_LIST=( "1.30" "1.31" )
     CURRENT_RELEASE="false"
     k8s_user_home=""
     k8s_arch=`uname -p`  # what arch
@@ -556,7 +556,7 @@ function envSetupMain {
     MIN_RAM=4
     MIN_FREE_SPACE=30
     LINUX_OS_LIST=( "Ubuntu" )
-    UBUNTU_OK_VERSIONS_LIST=(20 22)
+    UBUNTU_OK_VERSIONS_LIST=(22 24)
 
     # ensure we are running as root
     if [ "$EUID" -ne 0 ]

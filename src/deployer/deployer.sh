@@ -105,7 +105,7 @@ deployBPMS() {
           fi
       fi
     else
-      echo " ** Warning : No BPMN files found in $file"  # Notify if no files are found in a location
+      echo -e "${RED}** Warning : No BPMN files found in $file ${RESET}"  # Notify if no files are found in a location
     fi
   done
 
@@ -113,8 +113,8 @@ deployBPMS() {
   if [ "$successful_uploads" -ge "$bpms_to_deploy" ]; then
     echo " [ok] "
   else
-    echo "Warning: there was an issue deploying the BPMN diagrams."
-    echo "         run ./src/utils/deployBpmn-gazelle.sh to investigate"
+    echo -e "${RED}Warning: there was an issue deploying the BPMN diagrams."
+    echo -e "         run ./src/utils/deployBpmn-gazelle.sh to investigate${RESET}"
   fi
 }
 
@@ -267,7 +267,7 @@ function deleteResourcesInNamespaceMatchingPattern() {
         namespace=$(echo "$namespace" | cut -d'/' -f2)
         if [[ $namespace == "default" ]]; then
           local deployment_name="prometheus-operator"
-          deployment_available=$(kubectl get deployment "$deployment_name" -n "default" -o jsonpath='{.status.conditions[?(@.type=="Available")].status}')
+          deployment_available=$(kubectl get deployment "$deployment_name" -n "default" -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' 2>/dev/null)
           if [[ "$deployment_available" == "True" ]]; then
             printf  "Deleting Prometheus Operator resources in default namespace"
             LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
@@ -399,6 +399,8 @@ function deployPH(){
       deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
       deleteResourcesInNamespaceMatchingPattern "default"  #just removes prometheus at the moment
       manageElasticSecrets delete "$INFRA_NAMESPACE" "$APPS_DIR/$PHREPO_DIR/helm/es-secret"
+      rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz"
+      rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz"
     fi
   fi 
   echo "Deploying PaymentHub EE"
@@ -485,13 +487,31 @@ function applyKubeManifests() {
         return 1
     fi
 
-    # Use 'kubectl apply' to apply manifests in the specified directory.
-    su - $k8s_user -c "kubectl apply -f $directory -n $namespace"  >> /dev/null 2>&1 
-    if [ $? -eq 0 ]; then
-        echo -e "    Kubernetes manifests applied successfully."
-    else
-        echo -e "${RED}Failed to apply Kubernetes manifests.${RESET}"
-    fi
+    # Apply persistence-related manifests first
+    for file in "$directory"/*persistence*.yaml; do
+      if [ -f "$file" ]; then
+        su - $k8s_user -c "kubectl apply -f $file -n $namespace" >> /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+          echo -e "${RED}Failed to apply persistence manifest $file.${RESET}"
+        fi
+      fi
+    done
+
+    # Apply other manifests
+    for file in "$directory"/*.yaml; do
+      if [[ "$file" != *persistence*.yaml ]]; then
+        su - $k8s_user -c "kubectl apply -f $file -n $namespace" >> /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+          echo -e "${RED}Failed to apply Kubernetes manifest $file.${RESET}"
+        fi
+      fi
+    done
+    # su - $k8s_user -c "kubectl apply -f $directory -n $namespace"  >> /dev/null 2>&1 
+    # if [ $? -eq 0 ]; then
+    #     echo -e "    Kubernetes manifests applied successfully."
+    # else
+    #     echo -e "${RED}Failed to apply Kubernetes manifests.${RESET}"
+    # fi
 }
 
 
@@ -609,6 +629,11 @@ function DeployMifosXfromYaml() {
   echo "==> Deploying MifosX i.e. web-app and Fineract via application manifests"
   createNamespace "$MIFOSX_NAMESPACE"
   cloneRepo "$MIFOSX_BRANCH" "$MIFOSX_REPO_LINK" "$APPS_DIR" "$MIFOSX_REPO_DIR"
+  
+  # Restore the database dump before starting MifosX 
+  # Assumes FINERACT_LIQUIBASE_ENABLED=false in fineract deployment
+  echo "    Restoring MifosX database dump"
+  $UTILS_DIR/dump-restore-fineract-db.sh -r > /dev/null 
   applyKubeManifests "$manifests_dir" "$MIFOSX_NAMESPACE"
 
   echo -e "\n${GREEN}====================================="
@@ -645,6 +670,9 @@ function deleteApps {
     deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
+    rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz"
+    rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz"
+    echo "fred"
     deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "default"
   elif [[ "$appsToDelete" == "vnext" ]];then
@@ -653,6 +681,9 @@ function deleteApps {
     deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
   elif [[ "$appsToDelete" == "phee" ]]; then
     deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
+    rm  $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz
+    rm  $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz
+    echo "fred"
     echo "Handling Prometheus Operator resources in the default namespace"
     LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
     su - "$k8s_user" -c "curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/${LATEST}/bundle.yaml | kubectl -n default delete -f -" > /dev/null 2>&1
@@ -709,6 +740,7 @@ function deployApps {
     #             as part of the infra startup
 
   elif [[ "$appsToDeploy" == "phee" ]]; then
+    deployInfrastructure "false"
     deployPH
   else 
     echo -e "${RED}Invalid option ${RESET}"

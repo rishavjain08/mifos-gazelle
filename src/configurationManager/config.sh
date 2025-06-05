@@ -6,6 +6,7 @@
 BASE_DIR=$( cd $(dirname "$0") ; pwd )
 APPS_DIR="$BASE_DIR/repos"
 CONFIG_DIR="$BASE_DIR/config"
+UTILS_DIR="$BASE_DIR/src/utils"
 INFRA_NAMESPACE="infra"
 INFRA_RELEASE_NAME="infra"
 INFRA_CHART_DIR="$BASE_DIR/src/deployer/helm/infra" 
@@ -40,15 +41,15 @@ LOCAL_PORT="3307"                   # Local port to forward to
 MAX_WAIT_SECONDS=60
 
 # MySQL Connection Details
-MYSQL_USER="root"
-MYSQL_PASSWORD="ethieTieCh8ahv"
+# MYSQL_USER="root"
+# MYSQL_PASSWORD="ethieTieCh8ahv"
 MYSQL_HOST="127.0.0.1"  # This is the localhost because we are port forwarding
 SQL_FILE="$BASE_DIR/src/deployer/setup.sql"
 
 #MifosX 
 MIFOSX_NAMESPACE="mifosx"
 MIFOSX_MANIFESTS_DIR="$APPS_DIR/mifosx/kubernetes/manifests"
-MIFOSX_BRANCH="mifos-gazelle_1"
+MIFOSX_BRANCH="gazelle-1.1.0"
 MIFOSX_REPO_LINK="https://github.com/openMF/mifosx-docker.git"
 MIFOSX_REPO_DIR="mifosx"
 

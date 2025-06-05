@@ -1,6 +1,6 @@
 # Declare global configurations
 global:
-  kibanaEnabled: false
+  kibanaEnabled: true
 
 ############### Kafka and Zookeeper ####################
 ## Reference: https://github.com/bitnami/charts/blob/main/bitnami/kafka/values.yaml
@@ -15,7 +15,6 @@ kafka:
   zookeeper:
     persistence:
       enabled: true
-
     fullnameOverride: "zookeeper"
 
   ## Kafka provisioning
@@ -163,7 +162,7 @@ redis:
 ############### Elasticsearch and Kibana  ####################
 elasticsearch:
   enabled: true
-  # fullnameOverride: "elastic"
+  #fullnameOverride: "fredelastic"
 
   security:
     elasticPassword: elasticSearchPas42
@@ -174,60 +173,31 @@ elasticsearch:
     replicaCount: 1
 
   master:
+    masterOnly: false
     replicaCount: 1
     persistence:
-      enabled: false
-
+      enabled: true
   data:
-    replicaCount: 1
-    persistence:
-      enabled: false
-
+    replicaCount: 0
+  coordinating:
+    replicaCount: 0
   ingest:
-    replicaCount: 1
+    replicaCount: 0
 
   ingress:
     enabled: true
-    # hostname: es01
+    ingressClassName: nginx
+    hostname: elasticsearch.mifos.gazelle.test
+    tls:
+      - enabled: false
 
-kibana:
-  enabled: true
-  imageTag: 7.16.3
-  fullnameOverride: "ph-ee-kibana"
-  elasticsearchHosts: "http://ph-ee-elasticsearch:9200/"
-  protocol: http
-  kibanaConfig:
-    kibana.yml: |
-      monitoring.enabled: false
-      xpack.encryptedSavedObjects.encryptionKey: 5f4dcc3b5aa765d61d8327deb882cf99
-      server.ssl:
+  kibana:
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hostname: kibana.mifos.gazelle.test
+      tls:
         enabled: false
-        key: /usr/share/kibana/config/certs/elastic-certificate.pem
-        certificate: /usr/share/kibana/config/certs/elastic-certificate.pem
-      xpack.security.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
-      elasticsearch.ssl:
-        certificateAuthorities: /usr/share/kibana/config/certs/elastic-certificate.pem
-        verificationMode: certificate
-  secretMounts:
-    - name: elastic-certificate-pem
-      secretName: elastic-certificate-pem
-      path: /usr/share/kibana/config/certs
-  extraEnvs:
-    - name: 'ELASTICSEARCH_USERNAME'
-      valueFrom:
-        secretKeyRef:
-          name: elastic-credentials
-          key: username
-    - name: 'ELASTICSEARCH_PASSWORD'
-      valueFrom:
-        secretKeyRef:
-          name: elastic-credentials
-          key: password
-    - name: 'KIBANA_ENCRYPTION_KEY'
-      valueFrom:
-        secretKeyRef:
-          name: kibana
-          key: encryptionkey
 
 ############### MySQL  ####################
 mysql:
@@ -249,10 +219,14 @@ mysql:
       CREATE DATABASE IF NOT EXISTS `voucher_management`;
       CREATE DATABASE IF NOT EXISTS `fineract_tenants`;
       CREATE DATABASE IF NOT EXISTS `fineract_default`;
+      CREATE DATABASE IF NOT EXISTS `greenbank`;
+      CREATE DATABASE IF NOT EXISTS `bluebank`;
       GRANT ALL PRIVILEGES ON messagegateway.* TO 'mifos';
       GRANT ALL PRIVILEGES ON `identity_account_mapper`.* TO 'mifos';
       GRANT ALL PRIVILEGES ON `voucher_management`.* TO 'mifos';
       GRANT ALL PRIVILEGES ON `fineract_tenants`.* TO 'mifos';
       GRANT ALL PRIVILEGES ON `fineract_default`.* TO 'mifos';
+      GRANT ALL PRIVILEGES ON `greenbank`.* TO 'mifos';
+      GRANT ALL PRIVILEGES ON `bluebank`.* TO 'mifos';
       GRANT ALL ON *.* TO 'root'@'%';
 
