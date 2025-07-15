@@ -102,12 +102,13 @@ function isDeployed() {  # Added missing parentheses
 deployBPMS() {
   local host="https://zeebeops.mifos.gazelle.test/zeebe/upload"
   local DEBUG=false
-  local bpms_to_deploy=38
   local successful_uploads=0
-  local BPMNS_DIR="$APPS_DIR/$PHREPO_DIR"
+  local BPMNS_DIR="$BASE_DIR/orchestration/feel"
+  local bpms_to_deploy=$(ls -l "$BPMNS_DIR"/*.bpmn | wc -l)
+  # echo "deploying $bpms_to_deploy BPMN diagrams to $host"
   printf "Deploying BPMN diagrams "
   # Find each .bpmn file in the specified directories and iterate over them
-  for file in "$BPMNS_DIR/orchestration/feel/"*.bpmn "$BPMNS_DIR/orchestration/feel/example/"*.bpmn; do
+  for file in "$BPMNS_DIR"/*.bpmn;  do
     # Check if the glob expanded to an actual file or just returned the pattern
     if [ -f "$file" ]; then
       # Construct and execute the curl command for each file
@@ -581,6 +582,8 @@ function vnext_configure_ttk {
   printf "\n==> Configuring the Testing Toolkit... "
 
   # Check if BlueBank pod is running
+  ########
+  # TOMD TODO use isPodRunning function
   local bb_pod_status
   bb_pod_status=$(kubectl get pods bluebank-backend-0 --namespace "$namespace" --no-headers 2>/dev/null | awk '{print $3}')
   
@@ -588,9 +591,8 @@ function vnext_configure_ttk {
     printf "    - TTK pod is not running; skipping configuration (may not support arm64).\n"
     return 0
   fi
-  
-  #printf "    Configuring TTK data and environment...\n"
-  
+  #####
+
   # Define TTK pod destinations
   local ttk_pod_env_dest="/opt/app/examples/environments"
   local ttk_pod_spec_dest="/opt/app/spec_files"
@@ -676,7 +678,7 @@ function DeployMifosXfromYaml() {
     # Wait for fineract-server pod to be ready
     echo "    Waiting for fineract-server pod to be ready (timeout: ${timeout_secs}s)..."
     if kubectl wait --for=condition=Ready pod -l app=fineract-server \
-        --namespace="$MIFOSX_NAMESPACE" --timeout="${timeout_secs}s" > / dev/null 2>&1 ; then
+        --namespace="$MIFOSX_NAMESPACE" --timeout="${timeout_secs}s" > /dev/null 2>&1 ; then
         echo "    MifosX  is  ready"
     else
         echo -e "${RED} ERROR: MifosX fineract-server pod failed to become ready within ${timeout_secs} seconds ${RESET}"
@@ -734,7 +736,6 @@ function deleteApps {
     deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
     rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz"
     rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz"
-    echo "fred"
     deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "default"
   elif [[ "$appsToDelete" == "vnext" ]];then
@@ -745,7 +746,6 @@ function deleteApps {
     deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
     rm  $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz
     rm  $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz
-    echo "fred"
     echo "Handling Prometheus Operator resources in the default namespace"
     LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
     su - "$k8s_user" -c "curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/${LATEST}/bundle.yaml | kubectl -n default delete -f -" > /dev/null 2>&1
@@ -792,6 +792,8 @@ function deployApps {
     DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
     generateMifosXandVNextData
   elif [[ "$appsToDeploy" == "phee" ]]; then
+    deployBPMS
+    exit 1 
     deployInfrastructure "false"
     deployPH
   else 

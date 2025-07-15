@@ -185,9 +185,6 @@ ph-ee-engine:
       enabled: false
   #### end of camunda-platform
 
-
-  # PH-EE Connector Mojaloop
-  # Note 'fred' and 'FRED' are development hooks as we continue to work on end to end integration flows.
   ph_ee_connector_mojaloop:
     enabled: true
     # the following 2 entries used only for dev/test of mojaloop connector 
@@ -250,20 +247,11 @@ ph-ee-engine:
     memoryRequest: "500k"
     testResultsOutputDir: "/tmp"
 
-# deployment:
-#   extraEnvs:
-#     - name: TOM_OPTS_2
-#       value: "this is FRED2 one of toms deployment options"
-
   operations_app:
     enabled: true
     #image: docker.io/openmf/ph-ee-operations-app:v1.20.0
     deployment:
       extraEnvs:
-        - name: "TOMS_OPTS"
-          value: "of-no-value"
-        - name: "TOMS_OPTS-3"
-          value: "of-no-value"
         - name: JAVA_TOOL_OPTIONS
           value: "-Xms128m -Xmx256m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:9876"
 
@@ -383,7 +371,6 @@ ph-ee-engine:
       hosts:
         - minio.mifos.gazelle.test
 
-    
     consoleIngress:
       enabled: true 
       ingressClassName: nginx 
@@ -392,7 +379,6 @@ ph-ee-engine:
       path: /
       hosts:
         - minio-console.mifos.gazelle.test
-
 
   ph-ee-connector:
     enabled: true
@@ -408,6 +394,7 @@ ph-ee-engine:
           value: "of-no-value"
         - name: JAVA_TOOL_OPTIONS
           value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError"
+
     limits:
       memory: "768M"
       cpu: "500m"
