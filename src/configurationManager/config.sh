@@ -7,51 +7,25 @@ BASE_DIR=$( cd $(dirname "$0") ; pwd )
 APPS_DIR="$BASE_DIR/repos"
 CONFIG_DIR="$BASE_DIR/config"
 UTILS_DIR="$BASE_DIR/src/utils"
-INFRA_NAMESPACE="infra"
-INFRA_RELEASE_NAME="infra"
 INFRA_CHART_DIR="$BASE_DIR/src/deployer/helm/infra" 
 NGINX_VALUES_FILE="$CONFIG_DIR/nginx_values.yaml"
-GAZELLE_DOMAIN="mifos.gazelle.test"
 
 # Mojaloop vNext 
-VNEXTBRANCH="beta1"
-VNEXTREPO_DIR="vnext"
-VNEXT_NAMESPACE="vnext"
-VNEXT_REPO_LINK="https://github.com/mojaloop/platform-shared-tools.git"
 VNEXT_LAYER_DIRS=("$APPS_DIR/vnext/packages/installer/manifests/crosscut" "$APPS_DIR/vnext/packages/installer/manifests/ttk" "$APPS_DIR/vnext/packages/installer/manifests/apps" "$APPS_DIR/vnext/packages/installer/manifests/reporting")
 VNEXT_VALUES_FILE="$CONFIG_DIR/vnext_values.json"
 VNEXT_MONGODB_DATA_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files/mongodb"
 VNEXT_TTK_FILES_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files"
 
 #PaymentHub EE 
-PHBRANCH="master"
-PHREPO_DIR="phlabs"
-PH_NAMESPACE="paymenthub"
-PH_RELEASE_NAME="phee"
 PH_VALUES_FILE="$CONFIG_DIR/ph_values.yaml"
-PH_REPO_LINK="https://github.com/openMF/ph-ee-env-labs.git"
-PH_EE_ENV_TEMPLATE_REPO_LINK="https://github.com/openMF/ph-ee-env-template.git"
-PH_EE_ENV_TEMPLATE_REPO_BRANCH="v1.13.0-gazelle"
-PH_EE_ENV_TEMPLATE_REPO_DIR="ph_template"
-
-# Define Kubernetes service and MySQL connection details
-MYSQL_SERVICE_NAME="mysql"  # Replace with your MySQL service name
-MYSQL_SERVICE_PORT="3306"           # Replace with the MySQL service port
-LOCAL_PORT="3307"                   # Local port to forward to
-MAX_WAIT_SECONDS=60
 
 # MySQL Connection Details
 # MYSQL_USER="root"
 # MYSQL_PASSWORD="ethieTieCh8ahv"
-MYSQL_HOST="127.0.0.1"  # This is the localhost because we are port forwarding
 SQL_FILE="$BASE_DIR/src/deployer/setup.sql"
 
 #MifosX 
-MIFOSX_NAMESPACE="mifosx"
 MIFOSX_MANIFESTS_DIR="$APPS_DIR/mifosx/kubernetes/manifests"
-MIFOSX_BRANCH="gazelle-1.1.0"
-MIFOSX_REPO_LINK="https://github.com/openMF/mifosx-docker.git"
-MIFOSX_REPO_DIR="mifosx"
 
 ########################################################################
 # FUNCTIONS FOR CONFIGURATION MANAGEMENT

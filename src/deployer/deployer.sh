@@ -440,10 +440,10 @@ function createNamespace () {
 }
 
 function deployInfrastructure () {
-  local redeploy="$1"
+  local redeploy_infra="$1"
   printf "==> Deploying infrastructure \n"
   if [[ "$(isDeployed "infra")" == "true" ]]; then
-    if [[ "$redeploy" == "false" ]]; then
+    if [[ "$redeploy_infra" == "false" ]]; then
       echo "    infrastructure is already deployed. Skipping deployment."
       return
     else # need to delete and deploy 
@@ -625,7 +625,7 @@ function deployvNext() {
 }
 
 function DeployMifosXfromYaml() {
-  manifests_dir=$1
+  local manifests_dir=$1
   echo "==> Deploying MifosX i.e. web-app and Fineract via application manifests"
   createNamespace "$MIFOSX_NAMESPACE"
   cloneRepo "$MIFOSX_BRANCH" "$MIFOSX_REPO_LINK" "$APPS_DIR" "$MIFOSX_REPO_DIR"
@@ -664,9 +664,14 @@ function printEndMessage {
   echo -e "or install k9s by executing ./src/utils/install-k9s.sh <cr> in this terminal window\n\n"
 }
 
+# INFO: Updated function
 function deleteApps {
-  appsToDelete="$2"
+  # appsToDelete will be a space-separated string (e.g., "vnext mifosx", "all", "infra")
+  local mifosx_instances="$1" # This parameter seems unused in the original code, retaining for signature consistency
+  local appsToDelete="$2"
+
   if [[ "$appsToDelete" == "all" ]]; then
+    echo "Deleting all applications and related resources."
     deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
@@ -675,78 +680,101 @@ function deleteApps {
     echo "fred"
     deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "default"
-  elif [[ "$appsToDelete" == "vnext" ]];then
-    deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
-  elif [[ "$appsToDelete" == "mifosx" ]]; then 
-    deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
-  elif [[ "$appsToDelete" == "phee" ]]; then
-    deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
-    rm  $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz
-    rm  $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz
-    echo "fred"
-    echo "Handling Prometheus Operator resources in the default namespace"
-    LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
-    su - "$k8s_user" -c "curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/${LATEST}/bundle.yaml | kubectl -n default delete -f -" > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        echo "Warning: there was an issue uninstalling  Prometheus Operator resources in default namespace."
-        echo "         you can ignore this if Prometheus was not expected to be already running."
-    fi
-
-  elif [[ "$appsToDelete" == "infra" ]]; then
-    deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
-  else 
-    echo -e "${RED}Invalid -a option ${RESET}"
-    showUsage
-    exit 
-  fi  
+  else
+    # Iterate over each application in the space-separated list
+    echo "Deleting specific applications: $appsToDelete"
+    for app in $appsToDelete; do
+      case "$app" in
+        "mifosx")
+          deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
+          ;;
+        "vnext")
+          deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
+          ;;
+        "phee")
+          deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
+          # Specific cleanup for PHEE related chart files and Prometheus
+          rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz"
+          rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz"
+          echo "Handling Prometheus Operator resources in the default namespace as part of PHEE cleanup"
+          LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
+          su - "$k8s_user" -c "curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/${LATEST}/bundle.yaml | kubectl -n default delete -f -" > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Warning: there was an issue uninstalling  Prometheus Operator resources in default namespace."
+            echo "         you can ignore this if Prometheus was not expected to be already running."
+          fi
+          ;;
+        "infra")
+          deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
+          ;;
+        *)
+          echo -e "${RED}Invalid app '$app' for deletion. This should have been caught by validateInputs.${RESET}"
+          # No exit here, as we want to try deleting other valid apps if specified in a list
+          ;;
+      esac
+    done
+  fi
 }
 
+# INFO: Updated function
 function deployApps {
-  appsToDeploy="$2"
-  redeploy="$3"
+  # appsToDeploy will be a space-separated string (e.g., "vnext mifosx", "infra", "vnext phee mifosx")
+  local appsToDeploy="$2"
+  local redeploy="$3"
 
   echo "redeploy is $redeploy"
+  echo -e "${BLUE}Starting deployment for applications: $appsToDeploy...${RESET}"
 
-  if [[ "$appsToDeploy" == "all" ]]; then
-    echo -e "${BLUE}Deploying all apps ...${RESET}"
-    deployInfrastructure "$redeploy" 
-    deployvNext
-    deployPH
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
-  elif [[ "$appsToDeploy" == "infra" ]];then
-    deployInfrastructure
-  elif [[ "$appsToDeploy" == "vnext" ]];then
-    deployInfrastructure "false"
-    deployvNext
-  elif [[ "$appsToDeploy" == "mifosx" ]]; then 
-    if [[ "$redeploy" == "true" ]]; then 
-      echo "removing current mifosx and redeploying"
-      deleteApps 1 "mifosx"
-    fi 
-    deployInfrastructure "false"
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
-    # here we need to add the second tenant to the mysql database 
-    # this is how to check to see how many rows are in a schema 
-    # can use this to determine when mifos has finished creating tables 
-    # 249 seems to be the magic number for fineract_default schema for openmf/fineract:develop 
-    # kubectl run mysql-client --rm -it --image=mysql:5.6 --restart=Never -- mysql -h mysql.infra.svc.cluster.local -u root -pmysqlpw \
-    # -B -e 'SELECT count(*) AS TOTALNUMBEROFTABLES FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "fineract_default" '
-    # kubectl -n $INFRA_NAMESPACE cp $CONFIG_DIR/mifos-multi-tenant.sql mysql-0:/tmp
-    # kubectl -n $INFRA_NAMESPACE exec  mysql-0 
-    # TODO: add the automation above BUT for now use 
-    #       src/utils/update-mifos-tenants.sh and do this after run.sh has completed and pods are up
-    #       NOTE: the reason I am hesitating to add this now i.e. v1.0.0 is the time it takes then for the fineract-server pod to come online 
-    #             I need to see what the perf hit is *also* I am thiking we should simply export/import the mysql database 
-    #             as part of the infra startup
-
-  elif [[ "$appsToDeploy" == "phee" ]]; then
-    deployInfrastructure "false"
-    deployPH
-  else 
-    echo -e "${RED}Invalid option ${RESET}"
-    showUsage
-    exit 
-  fi
+  # Process each application in the space-separated list
+  for app in $appsToDeploy; do
+    echo -e "${BLUE}--- Deploying '$app' ---${RESET}"
+    case "$app" in
+      "infra")
+        deployInfrastructure "$redeploy"
+        ;;
+      "vnext")
+        deployInfrastructure "false" # Deploy infra if not already
+        deployvNext
+        ;;
+      "mifosx")
+        # Preserve the specific redeploy logic for mifosx
+        if [[ "$(isDeployed "mifosx" )" == "true" ]]; then
+          if [[ "$redeploy" == "true" ]]; then
+            echo "removing current mifosx and redeploying"
+            deleteApps 1 "mifosx"
+          else
+            echo "MifosX is already deployed and redeploy is false. Skipping deployment."
+            continue # Skip to next app in the loop
+          fi
+        fi
+        deployInfrastructure "false" # Deploy infra if not already
+        DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"
+        # here we need to add the second tenant to the mysql database 
+        # this is how to check to see how many rows are in a schema 
+        # can use this to determine when mifos has finished creating tables 
+        # 249 seems to be the magic number for fineract_default schema for openmf/fineract:develop 
+        # kubectl run mysql-client --rm -it --image=mysql:5.6 --restart=Never -- mysql -h mysql.infra.svc.cluster.local -u root -pmysqlpw \
+        #   -B -e 'SELECT count(*) AS TOTALNUMBEROFTABLES FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "fineract_default" '
+        # kubectl -n $INFRA_NAMESPACE cp $CONFIG_DIR/mifos-multi-tenant.sql mysql-0:/tmp
+        # kubectl -n $INFRA_NAMESPACE exec mysql-0 
+        # TODO: add the automation above BUT for now use 
+        #       src/utils/update-mifos-tenants.sh and do this after run.sh has completed and pods are up
+        #       NOTE: the reason I am hesitating to add this now i.e. v1.0.0 is the time it takes then for the fineract-server pod to come online 
+        #             I need to see what the perf hit is *also* I am thinking we should simply export/import the mysql database 
+        #             as part of the infra startup
+        ;;
+      "phee")
+        deployInfrastructure "false" # Deploy infra if not already
+        deployPH
+        ;;
+      *)
+        echo -e "${RED}Error: Unknown application '$app' in deployment list. This should have been caught by validation.${RESET}"
+        showUsage
+        exit 1
+        ;;
+    esac
+    echo -e "${BLUE}--- Finished deploying '$app' ---${RESET}\n"
+  done
   addKubeConfig >> /dev/null 2>&1
   printEndMessage
 }
