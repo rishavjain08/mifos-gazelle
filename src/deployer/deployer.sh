@@ -9,6 +9,12 @@ check_command_execution() {
   fi
 }
 
+# Debug function to check if a function exists
+function function_exists() {
+    declare -f "$1" > /dev/null
+    return $?
+}
+
 function isPodRunning() {
     local podname="$1"
     local namespace="$2"
@@ -25,50 +31,71 @@ function isPodRunning() {
     fi
 }
 
-function isDeployed {
+function isDeployed() {  # Added missing parentheses
     local app_name="$1"
+    
     if [[ "$app_name" == "infra" ]]; then
-      # Check if the namespace exists
-      if ! kubectl get namespace "$INFRA_NAMESPACE" > /dev/null 2>&1; then
-          echo "false"
-          return
-      fi
-      # namespace exists so Check if the infra Helm chart is deployed and running in the $INFRA_NAMESPACE
-      helm_status=$(helm status infra -n "$INFRA_NAMESPACE" 2>&1)
-      #echo "helm status is $helm_status"
-      if echo "$helm_status" | awk '/^STATUS:/ {if ($2 == "deployed") exit 0; else exit 1}'; then
-          echo "true"
-      else
-          echo "false"
-      fi
-    elif [[ "$app_name" == "phee" ]]; then 
-      # Check if the namespace exists
-      if ! kubectl get namespace "$PH_NAMESPACE" > /dev/null 2>&1; then
-          echo "false"
-          return
-      fi
-      helm_status=$(helm status phee -n "$PHEE_NAMESPACE" 2>&1)
-      if echo "$helm_status" | awk '/^STATUS:/ {if ($2 == "deployed") exit 0; else exit 1}'; then
-          echo "true"
-      else
-          echo "false"
-      fi
-    elif [[ "$app_name" == "vnext" ]]; then 
-      # Check if the namespace exists
-      if ! kubectl get namespace "$VNEXT_NAMESPACE" > /dev/null 2>&1; then
-          echo "false"
-          return
-      fi
-      # assume if greenbank-backend-0 is running ok then vnext is installed 
-      local podname="greenbank-backend-0"
-      if [[ "$(isPodRunning "$podname" "$VNEXT_NAMESPACE")" == "true" ]]; then
-        echo "true"
-      else
-        echo "false"
-      fi
+        # Check if the namespace exists
+        if ! kubectl get namespace "$INFRA_NAMESPACE" > /dev/null 2>&1; then
+            echo "false"
+            return
+        fi
+        # namespace exists so Check if the infra Helm chart is deployed and running in the $INFRA_NAMESPACE
+        helm_status=$(helm status infra -n "$INFRA_NAMESPACE" 2>&1)
+        if echo "$helm_status" | awk '/^STATUS:/ {if ($2 == "deployed") exit 0; else exit 1}'; then
+            echo "true"
+        else
+            echo "false"
+        fi
+        
+    elif [[ "$app_name" == "phee" ]]; then
+        # Check if the namespace exists
+        if ! kubectl get namespace "$PH_NAMESPACE" > /dev/null 2>&1; then
+            echo "false"
+            return
+        fi
+        helm_status=$(helm status phee -n "$PHEE_NAMESPACE" 2>&1)  # Fixed: was "$PHEE_NAMESPACE", should be consistent
+        if echo "$helm_status" | awk '/^STATUS:/ {if ($2 == "deployed") exit 0; else exit 1}'; then
+            echo "true"
+        else
+            echo "false"
+        fi
+        
+    elif [[ "$app_name" == "vnext" ]]; then
+        # Check if the namespace exists
+        if ! kubectl get namespace "$VNEXT_NAMESPACE" > /dev/null 2>&1; then
+            echo "false"
+            return
+        fi
+        # assume if greenbank-backend-0 is running ok then vnext is installed
+        local vnext_podname="greenbank-backend-0"
+        if [[ "$(isPodRunning "$vnext_podname" "$VNEXT_NAMESPACE")" == "true" ]]; then
+            echo "true"
+        else
+            echo "false"
+        fi
+        
     elif [[ "$app_name" == "mifosx" ]]; then
-      # MifosX installs so quickly we just redeploy each time 
-      echo "false"
+        # Check if the namespace exists
+        if ! kubectl get namespace "$MIFOSX_NAMESPACE" > /dev/null 2>&1; then
+            echo "false"
+            return
+        fi
+        # More robust way to get the pod name
+        local mifosx_podname
+        mifosx_podname=$(kubectl get pods -n "$MIFOSX_NAMESPACE" --no-headers -o custom-columns=":metadata.name" | grep -i fineract-server | head -1)
+        
+        # echo "DEBUG in isDeployed mifosx_podname is $mifosx_podname"
+        # echo "MIFOSX_NAMESPACE is: '$MIFOSX_NAMESPACE'"
+        
+        if [[ "$(isPodRunning "$mifosx_podname" "$MIFOSX_NAMESPACE")" == "true" ]]; then
+            echo "true"
+        else
+            echo "false"
+        fi
+        
+    else
+        echo "false"  # Added default case for unknown app names
     fi
 }
 
@@ -373,10 +400,18 @@ function deployPhHelmChartFromDir(){
   # Install the Helm chart from the local directory
   if [ -z "$valuesFile" ]; then
     echo "default values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace"
-    su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace" >> /dev/null 2>&1
+    if [ "$debug" = true ]; then
+      su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace"
+    else
+      su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace" >> /dev/null 2>&1
+    fi
   else
     echo "    deploying using values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile "
-    su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile "  >> /dev/null 2>&1
+    if [ "$debug" = true ]; then
+      su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile"
+    else
+      su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile "  >> /dev/null 2>&1
+    fi
   fi
 
   # Check deployment status
@@ -623,23 +658,50 @@ function deployvNext() {
   echo -e "============================${RESET}\n"
 
 }
-
 function DeployMifosXfromYaml() {
-  manifests_dir=$1
-  echo "==> Deploying MifosX i.e. web-app and Fineract via application manifests"
-  createNamespace "$MIFOSX_NAMESPACE"
-  cloneRepo "$MIFOSX_BRANCH" "$MIFOSX_REPO_LINK" "$APPS_DIR" "$MIFOSX_REPO_DIR"
-  
-  # Restore the database dump before starting MifosX 
-  # Assumes FINERACT_LIQUIBASE_ENABLED=false in fineract deployment
-  echo "    Restoring MifosX database dump"
-  $UTILS_DIR/dump-restore-fineract-db.sh -r > /dev/null 
-  applyKubeManifests "$manifests_dir" "$MIFOSX_NAMESPACE"
+    manifests_dir=$1
+    timeout_secs=${2:-600}  # Default timeout of 10 minutes if not specified
+    echo "==> Deploying MifosX i.e. web-app and fineract via application manifests"
+    createNamespace "$MIFOSX_NAMESPACE"
+    cloneRepo "$MIFOSX_BRANCH" "$MIFOSX_REPO_LINK" "$APPS_DIR" "$MIFOSX_REPO_DIR"
+    
+    # Restore the database dump before starting MifosX
+    # Assumes FINERACT_LIQUIBASE_ENABLED=false in fineract deployment
+    echo "    Restoring MifosX database dump "
+    $UTILS_DIR/dump-restore-fineract-db.sh -r > /dev/null
+    
+    echo "    deploying MifosX manifests from $manifests_dir"
+    applyKubeManifests "$manifests_dir" "$MIFOSX_NAMESPACE"
+    
+    # Wait for fineract-server pod to be ready
+    echo "    Waiting for fineract-server pod to be ready (timeout: ${timeout_secs}s)..."
+    if kubectl wait --for=condition=Ready pod -l app=fineract-server \
+        --namespace="$MIFOSX_NAMESPACE" --timeout="${timeout_secs}s" > / dev/null 2>&1 ; then
+        echo "    MifosX  is  ready"
+    else
+        echo -e "${RED} ERROR: MifosX fineract-server pod failed to become ready within ${timeout_secs} seconds ${RESET}"
+        return 1
+    fi
+    
+    echo -e "\n${GREEN}====================================="
+    echo -e "MifosX (fineract + web app) Deployed"
+    echo -e "=====================================${RESET}\n"
+}
 
-  echo -e "\n${GREEN}====================================="
-  echo -e "MifosX (fineract + web app) Deployed"
-  echo -e "=====================================${RESET}\n"
-} 
+function generateMifosXandVNextData {
+  # generate load and syncronize MifosX accounts and vNext Oracle associations  
+  if [[ "$(isDeployed "vnext" )" == "true" ]] && [[ "$(isDeployed "mifosx" )" == "true" ]] ; then
+    echo -e "${BLUE}Generating MifosX clients and accounts & registering associations with vNext Oracle ...${RESET}"
+    $RUN_DIR/src/utils/data-loading/generate-mifos-vnext-data.py > /dev/null 2>&1
+    if [[ "$?" -ne 0 ]]; then
+      echo -e "${RED}Error generating vNext clients and accounts ${RESET}"
+      echo " run $RUN_DIR/src/utils/data-loading/generate-mifos-vnext-data.py to investigate"
+      return 1 
+    fi
+  else 
+    echo -e "${YELLOW}vNext or MifosX is not running => skipping MifosX and vNext data generation ${RESET}"
+  fi
+}
 
 function test_vnext {
   echo "TODO" #TODO Write function to test apps
@@ -704,7 +766,6 @@ function deleteApps {
 function deployApps {
   appsToDeploy="$2"
   redeploy="$3"
-
   echo "redeploy is $redeploy"
 
   if [[ "$appsToDeploy" == "all" ]]; then
@@ -713,32 +774,23 @@ function deployApps {
     deployvNext
     deployPH
     DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
+    generateMifosXandVNextData
   elif [[ "$appsToDeploy" == "infra" ]];then
     deployInfrastructure
   elif [[ "$appsToDeploy" == "vnext" ]];then
     deployInfrastructure "false"
     deployvNext
   elif [[ "$appsToDeploy" == "mifosx" ]]; then 
+    #TOMD TODO : remove next debug lines 
+    # generateMifosXandVNextData
+    # exit 1 
     if [[ "$redeploy" == "true" ]]; then 
       echo "removing current mifosx and redeploying"
       deleteApps 1 "mifosx"
     fi 
     deployInfrastructure "false"
     DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
-    # here we need to add the second tenant to the mysql database 
-    # this is how to check to see how many rows are in a schema 
-    # can use this to determine when mifos has finished creating tables 
-    # 249 seems to be the magic number for fineract_default schema for openmf/fineract:develop 
-    # kubectl run mysql-client --rm -it --image=mysql:5.6 --restart=Never -- mysql -h mysql.infra.svc.cluster.local -u root -pmysqlpw \
-    # -B -e 'SELECT count(*) AS TOTALNUMBEROFTABLES FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "fineract_default" '
-    # kubectl -n $INFRA_NAMESPACE cp $CONFIG_DIR/mifos-multi-tenant.sql mysql-0:/tmp
-    # kubectl -n $INFRA_NAMESPACE exec  mysql-0 
-    # TODO: add the automation above BUT for now use 
-    #       src/utils/update-mifos-tenants.sh and do this after run.sh has completed and pods are up
-    #       NOTE: the reason I am hesitating to add this now i.e. v1.0.0 is the time it takes then for the fineract-server pod to come online 
-    #             I need to see what the perf hit is *also* I am thiking we should simply export/import the mysql database 
-    #             as part of the infra startup
-
+    generateMifosXandVNextData
   elif [[ "$appsToDeploy" == "phee" ]]; then
     deployInfrastructure "false"
     deployPH
