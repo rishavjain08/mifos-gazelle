@@ -99,6 +99,38 @@ function isDeployed() {  # Added missing parentheses
     fi
 }
 
+waitForPodReadyByPartialName() {
+  local namespace="$1"
+  local partial_podname="$2"
+  local max_wait_seconds=300
+  local sleep_interval=5
+  local elapsed=0
+  local podname
+
+  while (( elapsed < max_wait_seconds )); do
+    podname=$(kubectl get pods -n "$namespace" --no-headers -o custom-columns=":metadata.name" | grep -i "$partial_podname" | head -1)
+
+    if [[ -n "$podname" ]]; then
+      # Check if pod is Ready (Ready condition == True)
+      local ready_status
+      ready_status=$(kubectl get pod "$podname" -n "$namespace" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+      if [[ "$ready_status" == "True" ]]; then
+        echo "$podname"
+        return 0
+      fi
+    fi
+
+    echo "⏳ Waiting for pod matching '$partial_podname' to be Ready in namespace '$namespace'... ($elapsed seconds elapsed)"
+    sleep "$sleep_interval"
+    ((elapsed+=sleep_interval))
+  done
+
+  echo -e "${RED}    Error: Pod matching '$partial_podname' did not become Ready within 5 minutes.${RESET}" >&2
+  return 1
+}
+
+
 deployBPMS() {
   local host="https://zeebeops.mifos.gazelle.test/zeebe/upload"
   local DEBUG=false
@@ -106,7 +138,16 @@ deployBPMS() {
   local BPMNS_DIR="$BASE_DIR/orchestration/feel"
   local bpms_to_deploy=$(ls -l "$BPMNS_DIR"/*.bpmn | wc -l)
   # echo "deploying $bpms_to_deploy BPMN diagrams to $host"
-  printf "Deploying BPMN diagrams "
+  printf "    Deploying BPMN diagrams "
+  # wait to ensure zeebe-ops pod is running 
+  local zeebe_ops_podname="ph-ee-zeebe-ops"
+  if ! full_podname=$(waitForPodReadyByPartialName "$PH_NAMESPACE" $zeebe_ops_podname ); then
+    #echo "    ❌ Pod $zeebe_ops_podname is not ready or not found, skipping BPMN loading."
+    return 1
+  # else
+  #   echo "    ✅ Found running pod: $full_podname"
+  fi  
+
   # Find each .bpmn file in the specified directories and iterate over them
   for file in "$BPMNS_DIR"/*.bpmn;  do
     # Check if the glob expanded to an actual file or just returned the pattern
@@ -126,14 +167,14 @@ deployBPMS() {
       else
           http_code=$(eval "$cmd")
           exit_code=$?
+      fi 
 
-          if [ "$exit_code" -eq 0 ] && [ "$http_code" -eq 200 ]; then
-              #echo "File: $file - Upload successful"
-              ((successful_uploads++))
-          fi
+      if [ "$exit_code" -eq 0 ] && [ "$http_code" -eq 200 ]; then
+          #echo "File: $file - Upload successful"
+          ((successful_uploads++))
       fi
     else
-      echo -e "${RED}** Warning : No BPMN files found in $file ${RESET}"  # Notify if no files are found in a location
+      echo -e "${RED}** Warning : No BPMN files found in $BPMNS_DIR ${RESET}" 
     fi
   done
 
@@ -419,7 +460,7 @@ function deployPhHelmChartFromDir(){
   # TODO: should strengthen this check for deployment success 
   resource_count=$(kubectl get pods -n "$namespace" --ignore-not-found=true 2>/dev/null | grep -v "No resources found" | wc -l)
   if [ "$resource_count" -gt 0 ]; then
-    echo "PaymentHub EE Helm chart deployed successfully."
+    echo "    PaymentHub EE Helm chart deployed successfully."
   else
     echo -e "${RED}Helm chart deployment failed.${RESET}"
     cleanUp
@@ -764,6 +805,9 @@ function deleteApps {
 }
 
 function deployApps {
+  # deployBPMS
+  # exit 1 
+
   appsToDeploy="$2"
   redeploy="$3"
   echo "redeploy is $redeploy"
@@ -781,9 +825,6 @@ function deployApps {
     deployInfrastructure "false"
     deployvNext
   elif [[ "$appsToDeploy" == "mifosx" ]]; then 
-    #TOMD TODO : remove next debug lines 
-    # generateMifosXandVNextData
-    # exit 1 
     if [[ "$redeploy" == "true" ]]; then 
       echo "removing current mifosx and redeploying"
       deleteApps 1 "mifosx"
@@ -792,8 +833,6 @@ function deployApps {
     DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
     generateMifosXandVNextData
   elif [[ "$appsToDeploy" == "phee" ]]; then
-    deployBPMS
-    exit 1 
     deployInfrastructure "false"
     deployPH
   else 

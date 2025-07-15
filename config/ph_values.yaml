@@ -386,12 +386,13 @@ ph-ee-engine:
   zeebe_ops:
     enabled: true
     image: docker.io/openmf/ph-ee-zeebe-ops:v1.4.0-gazelle-1.1.0
+    readinessProbe:
+      initialDelaySeconds: 60
+
+    livenessProbe:
+      initialDelaySeconds: 30
     deployment:
       extraEnvs:
-        - name: "TOMS_OPTS"
-          value: "of-no-value"
-        - name: "TOMS_OPTS-3"
-          value: "of-no-value"
         - name: JAVA_TOOL_OPTIONS
           value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError"
 
