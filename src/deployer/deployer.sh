@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# deployer.sh -- the main Mifos Gazelle deployer script
 
 # Function to check and handle command execution errors
 check_command_execution() {
@@ -84,9 +85,6 @@ function isDeployed() {  # Added missing parentheses
         # More robust way to get the pod name
         local mifosx_podname
         mifosx_podname=$(kubectl get pods -n "$MIFOSX_NAMESPACE" --no-headers -o custom-columns=":metadata.name" | grep -i fineract-server | head -1)
-        
-        # echo "DEBUG in isDeployed mifosx_podname is $mifosx_podname"
-        # echo "MIFOSX_NAMESPACE is: '$MIFOSX_NAMESPACE'"
         
         if [[ "$(isPodRunning "$mifosx_podname" "$MIFOSX_NAMESPACE")" == "true" ]]; then
             echo "true"
@@ -373,8 +371,6 @@ function deployHelmChartFromDir() {
   # Check if a values file has been provided
   values_file="$4"
 
-  # TODO Determine whether to install or upgrade the chart also check whether to apply a values file
-  #su - $k8s_user -c "helm list -n $namespace"
   if [ -n "$values_file" ]; then
       echo "Installing Helm chart using values: $values_file..."
       su - $k8s_user -c "helm install $release_name $chart_dir -n $namespace -f $values_file"
@@ -622,17 +618,15 @@ function vnext_configure_ttk {
   local warning_issued=false
   printf "\n==> Configuring the Testing Toolkit... "
 
-  # Check if BlueBank pod is running
-  ########
-  # TOMD TODO use isPodRunning function
+  # Check if BlueBank pod is running => remember 
   local bb_pod_status
   bb_pod_status=$(kubectl get pods bluebank-backend-0 --namespace "$namespace" --no-headers 2>/dev/null | awk '{print $3}')
   
   if [[ "$bb_pod_status" != "Running" ]]; then
-    printf "    - TTK pod is not running; skipping configuration (may not support arm64).\n"
+    printf "    - TTK pod is not running; skipping configuration (note TTK may not support arm64).\n"
+    printf "    - Note: TTK is not essential for Mifos Gazelle deployments \n"
     return 0
   fi
-  #####
 
   # Define TTK pod destinations
   local ttk_pod_env_dest="/opt/app/examples/environments"

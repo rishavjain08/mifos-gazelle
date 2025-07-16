@@ -55,6 +55,7 @@ DEFAULT_PAYMENT_TYPE_ID = 1 # Assuming payment type ID 1 exists and is suitable 
 PAYLOAD_DATE_FORMAT_LITERAL = "dd MMMM yyyy"
 
 # generate random unique mobile numbers
+random.seed(42)  # Set a fixed seed for reproducibility
 total_clients = sum(TENANTS.values())
 unique_mobile_numbers = [f"04{random.randint(10000000, 99999999)}" for _ in range(total_clients)]
 random.shuffle(unique_mobile_numbers)
