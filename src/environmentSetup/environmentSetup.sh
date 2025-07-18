@@ -540,14 +540,14 @@ function envSetupMain {
     DEFAULT_K8S_DISTRO="k3s"  #only k3s is currently being tested 
     K8S_VERSION=""
 
-    HELM_VERSION="3.12.0"  # Feb 2023
+    HELM_VERSION="3.18.4"  # July 2025
     OS_VERSIONS_LIST=( 22 24 )
-    K8S_CURRENT_RELEASE_LIST=( "1.31" "1.32" )
+    K8S_CURRENT_RELEASE_LIST=( "1.31" "1.32" ) 
     CURRENT_RELEASE="false"
     k8s_user_home=""
     k8s_arch=`uname -p`  # what arch
     # Set the minimum amount of RAM in GB
-    MIN_RAM=4
+    MIN_RAM=6
     MIN_FREE_SPACE=30
     LINUX_OS_LIST=( "Ubuntu" )
     UBUNTU_OK_VERSIONS_LIST=(22 24)
