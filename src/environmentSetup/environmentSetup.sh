@@ -542,7 +542,7 @@ function envSetupMain {
 
     HELM_VERSION="3.12.0"  # Feb 2023
     OS_VERSIONS_LIST=( 22 24 )
-    K8S_CURRENT_RELEASE_LIST=( "1.30" "1.31" )
+    K8S_CURRENT_RELEASE_LIST=( "1.31" "1.32" )
     CURRENT_RELEASE="false"
     k8s_user_home=""
     k8s_arch=`uname -p`  # what arch
