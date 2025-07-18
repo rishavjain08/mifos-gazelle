@@ -97,54 +97,56 @@ function isDeployed() {  # Added missing parentheses
     fi
 }
 
-waitForPodReadyByPartialName() {
-  local namespace="$1"
-  local partial_podname="$2"
-  local max_wait_seconds=300
-  local sleep_interval=5
-  local elapsed=0
-  local podname
+# waitForPodReadyByPartialName() {
+#   local namespace="$1"
+#   local partial_podname="$2"
+#   local max_wait_seconds=300
+#   local sleep_interval=5
+#   local elapsed=0
+#   local podname
 
-  while (( elapsed < max_wait_seconds )); do
-    podname=$(kubectl get pods -n "$namespace" --no-headers -o custom-columns=":metadata.name" | grep -i "$partial_podname" | head -1)
+#   while (( elapsed < max_wait_seconds )); do
+#     podname=$(kubectl get pods -n "$namespace" --no-headers -o custom-columns=":metadata.name" | grep -i "$partial_podname" | head -1)
 
-    if [[ -n "$podname" ]]; then
-      # Check if pod is Ready (Ready condition == True)
-      local ready_status
-      ready_status=$(kubectl get pod "$podname" -n "$namespace" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+#     if [[ -n "$podname" ]]; then
+#       # Check if pod is Ready (Ready condition == True)
+#       local ready_status
+#       ready_status=$(kubectl get pod "$podname" -n "$namespace" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
 
-      if [[ "$ready_status" == "True" ]]; then
-        echo "$podname"
-        return 0
-      fi
-    fi
+#       if [[ "$ready_status" == "True" ]]; then
+#         echo "$podname"
+#         return 0
+#       fi
+#     fi
 
-    echo "⏳ Waiting for pod matching '$partial_podname' to be Ready in namespace '$namespace'... ($elapsed seconds elapsed)"
-    sleep "$sleep_interval"
-    ((elapsed+=sleep_interval))
-  done
+#     echo "⏳ Waiting for pod matching '$partial_podname' to be Ready in namespace '$namespace'... ($elapsed seconds elapsed)"
+#     sleep "$sleep_interval"
+#     ((elapsed+=sleep_interval))
+#   done
 
-  echo -e "${RED}    Error: Pod matching '$partial_podname' did not become Ready within 5 minutes.${RESET}" >&2
-  return 1
-}
+#   echo -e "${RED}    Error: Pod matching '$partial_podname' did not become Ready within 5 minutes.${RESET}" >&2
+#   return 1
+# }
 
 
 deployBPMS() {
   local host="https://zeebeops.mifos.gazelle.test/zeebe/upload"
   local DEBUG=false
   local successful_uploads=0
-  local BPMNS_DIR="$BASE_DIR/orchestration/feel"
+  local BPMNS_DIR="$BASE_DIR/orchestration/feel"  # BPMNs deployed from  Gazelle but probably eventually belong in ph-ee-env-template 
   local bpms_to_deploy=$(ls -l "$BPMNS_DIR"/*.bpmn | wc -l)
   # echo "deploying $bpms_to_deploy BPMN diagrams to $host"
-  printf "    Deploying BPMN diagrams "
+  printf "    Deploying BPMN diagrams from $BPMNS_DIR "
   # wait to ensure zeebe-ops pod is running 
   local zeebe_ops_podname="ph-ee-zeebe-ops"
-  if ! full_podname=$(waitForPodReadyByPartialName "$PH_NAMESPACE" $zeebe_ops_podname ); then
-    #echo "    ❌ Pod $zeebe_ops_podname is not ready or not found, skipping BPMN loading."
-    return 1
-  # else
-  #   echo "    ✅ Found running pod: $full_podname"
-  fi  
+  # todo : this is not needed if we are ensuring that the PHEE helm chart is fully up before continuing 
+  #        in the deploy PH function 
+  # if ! full_podname=$(waitForPodReadyByPartialName "$PH_NAMESPACE" $zeebe_ops_podname ); then
+  #   #echo "    ❌ Pod $zeebe_ops_podname is not ready or not found, skipping BPMN loading."
+  #   return 1
+  # # else
+  # #   echo "    ✅ Found running pod: $full_podname"
+  # fi  
 
   # Find each .bpmn file in the specified directories and iterate over them
   for file in "$BPMNS_DIR"/*.bpmn;  do
@@ -387,7 +389,6 @@ function deployHelmChartFromDir() {
     echo "Helm chart deployed successfully."
   else
     echo -e "${RED}Helm chart deployment failed.${RESET}"
-    cleanUp
   fi
 
 }
@@ -464,10 +465,8 @@ function deployPhHelmChartFromDir(){
     echo "    Helm release '$releaseName' deployed successfully."
     return 0
   else
-    echo -e "${RED}❌ Helm release '$releaseName' not in deployed state:${RESET}"
-    cat /tmp/helm_status_output
-    cleanUp
-    return 1
+    echo -e "${RED}    ❌ Helm install of release '$releaseName' has failed :${RESET}"
+    exit 1
   fi
   # # Install the Helm chart from the local directory
   # if [ -z "$valuesFile" ]; then
@@ -498,6 +497,7 @@ function deployPhHelmChartFromDir(){
 }
 
 function deployPH(){
+  # TODO make this a global variable
   gazelleChartPath="$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle"
   if [[ "$(isDeployed "phee" )" == "true" ]]; then
     if [[ "$redeploy" == "false" ]]; then
@@ -523,7 +523,7 @@ function deployPH(){
   deployPhHelmChartFromDir "$PH_NAMESPACE" "$gazelleChartPath" "$PH_VALUES_FILE"
   # now load the BPMS diagrams we do it here not in the helm chart so that 
   # we can count the sucessful BPMN uploads and be confident that they are working 
-  deployBPMS
+  #deployBPMS
   echo -e "\n${GREEN}============================"
   echo -e "Paymenthub Deployed"
   echo -e "============================${RESET}\n"
@@ -849,6 +849,7 @@ function deployApps {
     deployvNext
     deployPH
     DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
+    deployBPMS
     generateMifosXandVNextData
   elif [[ "$appsToDeploy" == "infra" ]];then
     deployInfrastructure

@@ -416,7 +416,8 @@ function configure_k8s_user_env {
         echo "complete -F __start_kubectl k " >>  $k8s_user_home/.bashrc
         echo "alias ksetns=\"kubectl config set-context --current --namespace\" " >>  $k8s_user_home/.bashrc
         echo "alias ksetuser=\"kubectl config set-context --current --user\" "  >>  $k8s_user_home/.bashrc
-        echo "alias cdml=\"cd $k8s_user_home/mifos-gazelle\" " >>  $k8s_user_home/.bashrc
+        echo "alias cdg=\"cd $k8s_user_home/mifos-gazelle\" " >>  $k8s_user_home/.bashrc
+        echo "export PATH=\$PATH:/usr/local/bin" >> $k8s_user_home/.bashrc
         printf "#GAZELLE_END end of config added by mifos-gazelle #\n" >> $k8s_user_home/.bashrc
     else
         printf "\r==> Configuration for .bashrc for %s for user %s already exists ..skipping\n" "$k8s_distro" "$k8s_user"
@@ -531,13 +532,6 @@ function setup_k8s_cluster {
         fi
 }
 
-# function deleteAppResources(){
-#     deleteResourcesInNamespaceMatchingPattern "$FIN_NAMESPACE"
-#     deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
-#     deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
-#     deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
-#     deleteResourcesInNamespaceMatchingPattern "default"
-# }
 
 ################################################################################
 # MAIN
@@ -594,6 +588,7 @@ function envSetupMain {
             install_k8s_tools
             add_helm_repos
             configure_k8s_user_env
+            $UTILS_DIR/install-k9s.sh > /dev/null 2>&1
         else 
             checkHelmandKubectl # ensure things really are in place properly 
         fi
