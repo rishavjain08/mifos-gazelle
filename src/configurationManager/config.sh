@@ -20,7 +20,7 @@ VNEXT_NAMESPACE="vnext"
 VNEXT_REPO_LINK="https://github.com/mojaloop/platform-shared-tools.git"
 VNEXT_LAYER_DIRS=("$APPS_DIR/vnext/packages/installer/manifests/crosscut" "$APPS_DIR/vnext/packages/installer/manifests/ttk" "$APPS_DIR/vnext/packages/installer/manifests/apps" "$APPS_DIR/vnext/packages/installer/manifests/reporting")
 VNEXT_VALUES_FILE="$CONFIG_DIR/vnext_values.json"
-VNEXT_MONGODB_DATA_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files/mongodb"
+# => use CONFIG_DIR mongodb dump for gazelle 1.1.0 VNEXT_MONGODB_DATA_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files/mongodb"
 VNEXT_TTK_FILES_DIR="$APPS_DIR/$VNEXTREPO_DIR/packages/deployment/docker-compose-apps/ttk_files"
 
 #PaymentHub EE 

@@ -187,9 +187,8 @@ ph-ee-engine:
 
   ph_ee_connector_mojaloop:
     enabled: true
-    # the following 2 entries used only for dev/test of mojaloop connector 
-    # image: mojaloop-connector:gazelle
-    # imagePullPolicy: "Never"
+    image: docker.io/openmf/ph-ee-connector-mojaloop-java:gazelle-v1.1.0
+    imagePullPolicy: IfNotPresent
     # image: mojaloop:gazelle1 
     ingress:
       enabled: true
@@ -249,6 +248,8 @@ ph-ee-engine:
 
   operations_app:
     enabled: true
+    image: docker.io/openmf/ph-ee-operations-app:v1.17.1-gazelle-1.1.0
+    imagePullPolicy: IfNotPresent
     #image: docker.io/openmf/ph-ee-operations-app:v1.20.0
     deployment:
       extraEnvs:
@@ -256,24 +257,27 @@ ph-ee-engine:
           value: "-Xms128m -Xmx256m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:9876"
 
   connector_bulk:
+    enabled: true
+    image: docker.io/openmf/ph-ee-bulk-processor:v1.12.1-gazelle-1.1.0
+    imagePullPolicy: IfNotPresent
     tenants: "greenbank,bluebank"
     operations_app:
       #contactpoint: "http://ph-ee-operations-app:5000"
       contactpoint: "http://ph-ee-operations-app:80"
       endpoints:
         batch_transaction: "/api/v1/batch/transactions"
-    spec:
-      template:
-        containers:
-          env:
-            - name: "BP_JAVA_OPTS"
-              value: ""
-            - name: "BP_JAVA_OPTS-1"
-              value: "fred5"
-            - name: "BP_JAVA_OPTS-2"
-              value: "fred6"  
-            # - name: "TOMS_OPTS"
-            #   value: "of-no-value"
+    # spec:
+      # template:
+      #   containers:
+      #     env:
+      #       - name: "BP_JAVA_OPTS"
+      #         value: ""
+      #       - name: "BP_JAVA_OPTS-1"
+      #         value: "fred5"
+      #       - name: "BP_JAVA_OPTS-2"
+      #         value: "fred6"  
+      #       # - name: "TOMS_OPTS"
+      #       #   value: "of-no-value"
     deployment:
       extraEnvs:
         - name: JAVA_TOOL_OPTIONS
@@ -388,9 +392,8 @@ ph-ee-engine:
     image: docker.io/openmf/ph-ee-zeebe-ops:v1.4.0-gazelle-1.1.0
     readinessProbe:
       initialDelaySeconds: 60
-
     livenessProbe:
-      initialDelaySeconds: 30
+      initialDelaySeconds: 60
     deployment:
       extraEnvs:
         - name: JAVA_TOOL_OPTIONS

@@ -373,10 +373,10 @@ function deployHelmChartFromDir() {
 
   if [ -n "$values_file" ]; then
       echo "Installing Helm chart using values: $values_file..."
-      su - $k8s_user -c "helm install $release_name $chart_dir -n $namespace -f $values_file"
+      su - $k8s_user -c "helm install --wait --timeout 600s $release_name $chart_dir -n $namespace -f $values_file"
   else
       echo "Installing Helm chart using default values file ..."
-      su - $k8s_user -c "helm install $release_name $chart_dir -n $namespace "
+      su - $k8s_user -c "helm install --wait --timeout 600s $release_name $chart_dir -n $namespace "
   fi
 
   # todo : is the chart really deployed ok, need a test
@@ -434,36 +434,71 @@ function deployPhHelmChartFromDir(){
   local namespace="$1"
   local chartDir="$2"      # Directory containing the Helm chart
   local valuesFile="$3"    # Values file for the Helm chart
+  local releaseName="$PH_RELEASE_NAME"
+  local timeout="600s"
 
-  # Install the Helm chart from the local directory
-  if [ -z "$valuesFile" ]; then
-    echo "default values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace"
-    if [ "$debug" = true ]; then
-      su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace"
-    else
-      su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace" >> /dev/null 2>&1
-    fi
+  # Construct install command
+  local helm_cmd="helm install $releaseName $chartDir -n $namespace --wait --timeout $timeout"
+  if [ -n "$valuesFile" ]; then
+    helm_cmd="$helm_cmd -f $valuesFile"
+    echo "    Installing Helm chart with values file: $valuesFile"
   else
-    echo "    deploying using values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile "
-    if [ "$debug" = true ]; then
-      su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile"
-    else
-      su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile "  >> /dev/null 2>&1
-    fi
+    echo "    Installing Helm chart with default values..."
   fi
+
+  # Run the install command and capture exit status
+  if [ "$debug" = true ]; then
+    echo "🔧 Running as $k8s_user: $helm_cmd"
+    su - "$k8s_user" -c "bash -c '$helm_cmd'"
+    install_exit_code=$?
+  else
+    output=$(su - "$k8s_user" -c "bash -c '$helm_cmd'" 2>&1)
+    install_exit_code=$?
+  fi
+
+  # Verify status after install
+  su - "$k8s_user" -c "helm status $releaseName -n $namespace" > /tmp/helm_status_output 2>&1
+  local status_exit_code=$?
+
+  if grep -q "^STATUS: deployed" /tmp/helm_status_output; then
+    echo "    Helm release '$releaseName' deployed successfully."
+    return 0
+  else
+    echo -e "${RED}❌ Helm release '$releaseName' not in deployed state:${RESET}"
+    cat /tmp/helm_status_output
+    cleanUp
+    return 1
+  fi
+  # # Install the Helm chart from the local directory
+  # if [ -z "$valuesFile" ]; then
+  #   echo "default values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace --wait --timeout $timeout"
+  #   if [ "$debug" = true ]; then
+  #     su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace --wait --timeout $timeout"
+  #   else
+  #     su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace --wait --timeout $timeout" >> /dev/null 2>&1
+  #   fi
+  # else
+  #   echo "    deploying using values file > $k8s_user -c helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile --wait --timeout $timeout "
+  #   if [ "$debug" = true ]; then
+  #     su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile --wait --timeout $timeout"
+  #   else
+  #     su - "$k8s_user" -c "helm install $PH_RELEASE_NAME $chartDir -n $namespace -f $valuesFile --wait --timeout $timeout"  >> /dev/null 2>&1
+  #   fi
+  # fi
 
   # Check deployment status
   # TODO: should strengthen this check for deployment success 
-  resource_count=$(kubectl get pods -n "$namespace" --ignore-not-found=true 2>/dev/null | grep -v "No resources found" | wc -l)
-  if [ "$resource_count" -gt 0 ]; then
-    echo "    PaymentHub EE Helm chart deployed successfully."
-  else
-    echo -e "${RED}Helm chart deployment failed.${RESET}"
-    cleanUp
-  fi
+  # resource_count=$(kubectl get pods -n "$namespace" --ignore-not-found=true 2>/dev/null | grep -v "No resources found" | wc -l)
+  # if [ "$resource_count" -gt 0 ]; then
+  #   echo "    PaymentHub EE Helm chart deployed successfully."
+  # else
+  #   echo -e "${RED}Helm chart deployment failed.${RESET}"
+  #   cleanUp
+  # fi
 }
 
 function deployPH(){
+  gazelleChartPath="$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle"
   if [[ "$(isDeployed "phee" )" == "true" ]]; then
     if [[ "$redeploy" == "false" ]]; then
       echo "$PH_RELEASE_NAME is already deployed. Skipping deployment."
@@ -602,11 +637,12 @@ function addKubeConfig(){
 
 function vnext_restore_demo_data {
   local mongo_data_dir=$1
-  local namespace=$2 
+  local mongo_dump_file=$2
+  local namespace=$3 
   printf "    restoring vNext mongodb demonstration/test data "
   mongopod=`kubectl get pods --namespace $namespace | grep -i mongodb |awk '{print $1}'` 
   mongo_root_pw=`kubectl get secret --namespace $namespace  mongodb  -o jsonpath='{.data.mongodb-root-password}'| base64 -d` 
-  kubectl cp  $mongo_data_dir/mongodump-beta.gz $mongopod:/tmp/mongodump.gz  --namespace $namespace >/dev/null 2>&1 # copy the demo / test data into the mongodb pod
+  kubectl cp  $mongo_data_dir/$mongo_dump_file $mongopod:/tmp/mongodump.gz  --namespace $namespace  >/dev/null 2>&1 # copy the demo / test data into the mongodb pod
   kubectl exec --namespace $namespace --stdin --tty  $mongopod -- mongorestore  -u root -p $mongo_root_pw \
                --gzip --archive=/tmp/mongodump.gz --authenticationDatabase admin  >/dev/null 2>&1  
   printf " [ ok ] \n"
@@ -678,7 +714,8 @@ function deployvNext() {
   rm  -f "$APPS_DIR/$VNEXTREPO_DIR/packages/installer/manifests/ttk/ttk-cli.yaml" 
   
   configurevNext  # make any local mods to manifests
-  vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
+  # original vNext Beta mongo data vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
+  vnext_restore_demo_data $CONFIG_DIR "mongodump.gz" $INFRA_NAMESPACE
   for index in "${!VNEXT_LAYER_DIRS[@]}"; do
     folder="${VNEXT_LAYER_DIRS[index]}"
     applyKubeManifests "$folder" "$VNEXT_NAMESPACE" >/dev/null 2>&1
