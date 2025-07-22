@@ -8,6 +8,16 @@ kafka:
   enabled: true
   fullnameOverride: "kafka"
 
+  image:
+    registry: docker.io
+    repository: bitnami/kafka
+    tag: 3.2
+  # from chart heapOpts: -XX:InitialRAMPercentage=75 -XX:MaxRAMPercentage=75
+  heapOpts: "-Xms128m -Xmx256m"
+
+  controller:
+    controllerOnly: true 
+
   persistence:
     enabled: false
 
@@ -16,6 +26,11 @@ kafka:
     persistence:
       enabled: true
     fullnameOverride: "zookeeper"
+    image: # Explicitly define Zookeeper image for ARM if needed
+      registry: docker.io
+      repository: bitnami/zookeeper
+      tag: 3.7.1   
+    heapOpts: "-Xms128m -Xmx256m"
 
   ## Kafka provisioning
   provisioning:
@@ -102,30 +117,43 @@ redpanda-console:
             pathType: ImplementationSpecific
 
 ############### MongoDB  ####################
+#         older amd64 specific 
 # https://github.com/bitnami/charts/tree/main/bitnami/mongodb
+# mongodb:
+#   enabled: true
+#   image:
+#     tag: 5.0.18-debian-11-r8
+
+#   fullnameOverride: "mongodb"
+#   auth:
+#     enabled: true
+
+#     rootUser: root
+#     rootPassword: mongoDbPas42
+#     usernames:
+#     - 'mojaloop'
+#     passwords:
+#     - 'password'
+#     databases:
+#     - 'mlos'
+
+#     replicaSetKey: ""
+#     existingSecret: ""
+#   persistence:
+#     enabled: false
+################### end of  older gazelle v1.1.0 amd64 only ##############
+
 mongodb:
   enabled: true
-  image:
-    tag: 5.0.18-debian-11-r8
-
-  fullnameOverride: "mongodb"
-  auth:
-    enabled: true
-
-    rootUser: root
-    rootPassword: mongoDbPas42
-    usernames:
-    - 'mojaloop'
-    passwords:
-    - 'password'
-    databases:
-    - 'mlos'
-
-    replicaSetKey: ""
-    existingSecret: ""
   persistence:
-    enabled: false
+    enabled: true
+  image:
+    tag: 7.0
 
+  fullnameOverride: mongodb
+  settings:
+    rootUsername: root
+    rootPassword: mongoDbPas42
 ############### Mongo Express ####################
 # mongo express config
 mongo-express:
