@@ -31,8 +31,9 @@ function isPodRunning() {
         echo "false"
     fi
 }
-
-function isDeployed() {  # Added missing parentheses
+#TODO this really needs to be more robust than just checking namespace and single pod 
+#     existing and running. However it is a quick lkow resource check so leave for now  
+function isDeployed() { 
     local app_name="$1"
     
     if [[ "$app_name" == "infra" ]]; then
@@ -69,7 +70,8 @@ function isDeployed() {  # Added missing parentheses
             return
         fi
         # assume if greenbank-backend-0 is running ok then vnext is installed
-        local vnext_podname="greenbank-backend-0"
+        local vnext_podname
+        vnext_podname=$(kubectl get pods -n "$VNEXT_NAMESPACE" --no-headers -o custom-columns=":metadata.name" | grep -i settlements-api-svc | head -1)
         if [[ "$(isPodRunning "$vnext_podname" "$VNEXT_NAMESPACE")" == "true" ]]; then
             echo "true"
         else
@@ -135,18 +137,19 @@ deployBPMS() {
   local successful_uploads=0
   local BPMNS_DIR="$BASE_DIR/orchestration/feel"  # BPMNs deployed from  Gazelle but probably eventually belong in ph-ee-env-template 
   local bpms_to_deploy=$(ls -l "$BPMNS_DIR"/*.bpmn | wc -l)
-  # echo "deploying $bpms_to_deploy BPMN diagrams to $host"
-  printf "    Deploying BPMN diagrams from $BPMNS_DIR "
-  # wait to ensure zeebe-ops pod is running 
-  local zeebe_ops_podname="ph-ee-zeebe-ops"
-  # todo : this is not needed if we are ensuring that the PHEE helm chart is fully up before continuing 
-  #        in the deploy PH function 
-  # if ! full_podname=$(waitForPodReadyByPartialName "$PH_NAMESPACE" $zeebe_ops_podname ); then
-  #   #echo "    ❌ Pod $zeebe_ops_podname is not ready or not found, skipping BPMN loading."
-  #   return 1
-  # # else
-  # #   echo "    ✅ Found running pod: $full_podname"
-  # fi  
+  # TODO remove for release 
+  # # echo "deploying $bpms_to_deploy BPMN diagrams to $host"
+  # printf "    Deploying BPMN diagrams from $BPMNS_DIR "
+  # # wait to ensure zeebe-ops pod is running 
+  # local zeebe_ops_podname="ph-ee-zeebe-ops"
+  # # todo : this is not needed if we are ensuring that the PHEE helm chart is fully up before continuing 
+  # #        in the deploy PH function 
+  # # if ! full_podname=$(waitForPodReadyByPartialName "$PH_NAMESPACE" $zeebe_ops_podname ); then
+  # #   #echo "    ❌ Pod $zeebe_ops_podname is not ready or not found, skipping BPMN loading."
+  # #   return 1
+  # # # else
+  # # #   echo "    ✅ Found running pod: $full_podname"
+  # # fi  
 
   # Find each .bpmn file in the specified directories and iterate over them
   for file in "$BPMNS_DIR"/*.bpmn;  do
@@ -838,7 +841,9 @@ function deleteApps {
 }
 
 function deployApps {
-  # deployBPMS
+  # generateMifosXandVNextData # generate MifosX and vNext data if needed
+  # # deployBPMS
+  # # exit 1 
   # exit 1 
 
   appsToDeploy="$2"

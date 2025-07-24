@@ -7,34 +7,25 @@ global:
 kafka:
   enabled: true
   fullnameOverride: "kafka"
-  #replicaCount: 1
-  heapOpts: "-Xms64M -Xmx256M"
-
-  # seems this is for kraft mode only 
-  # controller : 
-  #   controllerOnly: true
-  #   replicaCount: 0
+  persistence:
+    enabled: false
+  externalAccess:
+    enabled: false
 
   broker:
     replicaCount: 1
+    heapOpts: "-Xms64M -Xmx256M"
+    resources: 
+      limits:
+        memory: "500Mi" # Using Mi for clarity and consistency
+        cpu: "500m"
+      requests: 
+        memory: "64Mi" # Using Mi for clarity and consistency
+        cpu: "100m"
   
   extraConfig:
-    # This is the default configuration for Kafka, you can override it as needed
-    # For example, you can enable auto topic creation or set other properties
-    # Uncomment and modify the following lines if needed
-    # auto.create.topics.enable: "true"
-    # offsets.topic.replication.factor: "1"
     autoCreateTopicsEnabled: "true"
     offsetsTopicReplicationFactor: "1"
-  # configurationOverrides:
-  #   auto.create.topics.enable: "true"
-  #   offsets.topic.replication.factor: "1"
-
-  persistence:
-    enabled: false
-  
-  externalAccess:
-    enabled: false
 
   # need this to ensure redpanda-console can connect to kafka
   listeners:
@@ -55,14 +46,6 @@ kafka:
     enabled: false
     clientProtocol: plaintext
 
-  resources: # Resource limits for the single Kafka broker
-    limits:
-      memory: "500m"
-      cpu: "500m"
-    requests: 
-      memory: "64Mi" # Request slightly less than limit
-      cpu: "100m"
-
   kraft:
     enabled: false
 
@@ -73,6 +56,14 @@ kafka:
       enabled: false
     fullnameOverride: "zookeeper"
     heapOpts: "-Xms64M -Xmx256M"
+
+    resources: 
+      limits:
+        memory: "256Mi" # Using Mi for clarity and consistency
+        cpu: "200m"
+      requests: 
+        memory: "64Mi" # Using Mi for clarity and consistency
+        cpu: "50m"
     #replicaCount: 1   
 
   controller:
@@ -225,10 +216,6 @@ mongo-express:
   basicAuthUsername: admin
   basicAuthPassword: admin
 
-  # livenessProbe:
-  #   enabled: false
-  # readinessProbe:
-  #   enabled: false
   extraEnv:
     - name: ME_CONFIG_MONGODB_URL
       value: "mongodb://root:mongoDbPas42@mongodb:27017/"
@@ -271,10 +258,10 @@ elasticsearch:
     # Define resources for this single 'all-in-one' master node
     resources:
       requests:
-        memory: "300M"  # Request enough memory for the heap + overhead
+        memory: "300Mi"  # Request enough memory for the heap + overhead
         cpu: "100m"
       limits:
-        memory: "768M" # Allow some buffer over the heap for OS page cache and other overhead
+        memory: "500Mi" # Allow some buffer over the heap for OS page cache and other overhead
         cpu: "500m" # 
 
 
