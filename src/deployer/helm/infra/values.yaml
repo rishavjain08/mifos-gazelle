@@ -7,21 +7,45 @@ global:
 kafka:
   enabled: true
   fullnameOverride: "kafka"
+  #replicaCount: 1
+  heapOpts: "-Xms64M -Xmx256M"
 
-  configurationOverrides:
-    auto.create.topics.enable: "true"
+  # seems this is for kraft mode only 
+  # controller : 
+  #   controllerOnly: true
+  #   replicaCount: 0
+
+  broker:
+    replicaCount: 1
+  
+  extraConfig:
+    # This is the default configuration for Kafka, you can override it as needed
+    # For example, you can enable auto topic creation or set other properties
+    # Uncomment and modify the following lines if needed
+    # auto.create.topics.enable: "true"
+    # offsets.topic.replication.factor: "1"
+    autoCreateTopicsEnabled: "true"
+    offsetsTopicReplicationFactor: "1"
+  # configurationOverrides:
+  #   auto.create.topics.enable: "true"
+  #   offsets.topic.replication.factor: "1"
 
   persistence:
-    enabled: true
+    enabled: false
   
   externalAccess:
     enabled: false
 
+  # need this to ensure redpanda-console can connect to kafka
   listeners:
     client:
       protocol: PLAINTEXT
+      # Explicitly advertise using the Kafka service name
+      advertisedListeners: PLAINTEXT://kafka:9092 
     interBroker:
       protocol: PLAINTEXT
+      # For a single-node setup, interBroker can also point to client.
+      advertisedListeners: PLAINTEXT://kafka:9092 
 
   extraEnvVars:
     - name: KAFKA_CFG_ADVERTISED_LISTENERS
@@ -31,11 +55,28 @@ kafka:
     enabled: false
     clientProtocol: plaintext
 
+  resources: # Resource limits for the single Kafka broker
+    limits:
+      memory: "500m"
+      cpu: "500m"
+    requests: 
+      memory: "64Mi" # Request slightly less than limit
+      cpu: "100m"
+
+  kraft:
+    enabled: false
+
   ## https://github.com/bitnami/charts/blob/main/bitnami/zookeeper/values.yaml
   zookeeper:
+    enabled: true
     persistence:
-      enabled: true
+      enabled: false
     fullnameOverride: "zookeeper"
+    heapOpts: "-Xms64M -Xmx256M"
+    #replicaCount: 1   
+
+  controller:
+    replicaCount: 0
 
   ## Kafka provisioning
   provisioning:
@@ -44,6 +85,9 @@ kafka:
     replicationFactor: 1
 
     topics:
+      - name: __consumer_offsets
+        partitions: 50
+        replicationFactor: 1    
       - name: KAFKA_AUDITS_TOPIC
         value: audits
       - name: KAFKA_LOGS_TOPIC
@@ -212,14 +256,28 @@ elasticsearch:
     tls:
       restEncryption: false
 
-  coordinating:
-    replicaCount: 1
+  # coordinating:
+  #   replicaCount: 1
 
   master:
     masterOnly: false
     replicaCount: 1
     persistence:
-      enabled: true
+      enabled: false
+    env:
+      - name: ES_JAVA_OPTS
+        # Set Xmx and Xms to the same value for stability. 768m is a common low-end starting point.
+        value: "-Xms64m -Xms256m" 
+    # Define resources for this single 'all-in-one' master node
+    resources:
+      requests:
+        memory: "300M"  # Request enough memory for the heap + overhead
+        cpu: "100m"
+      limits:
+        memory: "768M" # Allow some buffer over the heap for OS page cache and other overhead
+        cpu: "500m" # 
+
+
   data:
     replicaCount: 0
   coordinating:

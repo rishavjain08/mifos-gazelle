@@ -18,7 +18,10 @@ VNEXTBRANCH="beta1"
 VNEXTREPO_DIR="vnext"
 VNEXT_NAMESPACE="vnext"
 VNEXT_REPO_LINK="https://github.com/mojaloop/platform-shared-tools.git"
-VNEXT_LAYER_DIRS=("$APPS_DIR/vnext/packages/installer/manifests/crosscut" "$APPS_DIR/vnext/packages/installer/manifests/ttk" "$APPS_DIR/vnext/packages/installer/manifests/apps" "$APPS_DIR/vnext/packages/installer/manifests/reporting")
+#VNEXT_LAYER_DIRS=("$APPS_DIR/vnext/packages/installer/manifests/crosscut" "$APPS_DIR/vnext/packages/installer/manifests/ttk" "$APPS_DIR/vnext/packages/installer/manifests/apps" "$APPS_DIR/vnext/packages/installer/manifests/reporting")
+# for gazelle 1.1.0 we have removed the ttk layer as it is not needed as we have MifosX instance integrated as DFSPs 
+VNEXT_LAYER_DIRS=("$APPS_DIR/vnext/packages/installer/manifests/crosscut" "$APPS_DIR/vnext/packages/installer/manifests/apps" "$APPS_DIR/vnext/packages/installer/manifests/reporting")
+# debug TODO remove before release
 #VNEXT_LAYER_DIRS=("$APPS_DIR/vnext/packages/installer/manifests/crosscut" ) 
 
 VNEXT_VALUES_FILE="$CONFIG_DIR/vnext_values.json"
@@ -33,8 +36,8 @@ PH_RELEASE_NAME="phee"
 PH_VALUES_FILE="$CONFIG_DIR/ph_values.yaml"
 PH_REPO_LINK="https://github.com/openMF/ph-ee-env-labs.git"
 PH_EE_ENV_TEMPLATE_REPO_LINK="https://github.com/openMF/ph-ee-env-template.git"
-#PH_EE_ENV_TEMPLATE_REPO_BRANCH="v1.13.0-gazelle-1.1.0"
-PH_EE_ENV_TEMPLATE_REPO_BRANCH="tomdev7-ph-template"
+PH_EE_ENV_TEMPLATE_REPO_BRANCH="v1.13.0-gazelle-1.1.0"
+#PH_EE_ENV_TEMPLATE_REPO_BRANCH="tomdev7-ph-template"
 PH_EE_ENV_TEMPLATE_REPO_DIR="ph_template"
 
 # Define Kubernetes service and MySQL connection details
