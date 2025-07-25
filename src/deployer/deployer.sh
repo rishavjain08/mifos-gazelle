@@ -69,7 +69,7 @@ function isDeployed() {
             echo "false"
             return
         fi
-        # assume if greenbank-backend-0 is running ok then vnext is installed
+        # assume if vnext representative pod is running ok then vnext is installed
         local vnext_podname
         vnext_podname=$(kubectl get pods -n "$VNEXT_NAMESPACE" --no-headers -o custom-columns=":metadata.name" | grep -i settlements-api-svc | head -1)
         if [[ "$(isPodRunning "$vnext_podname" "$VNEXT_NAMESPACE")" == "true" ]]; then
@@ -139,7 +139,7 @@ deployBPMS() {
   local bpms_to_deploy=$(ls -l "$BPMNS_DIR"/*.bpmn | wc -l)
   # TODO remove for release 
   # # echo "deploying $bpms_to_deploy BPMN diagrams to $host"
-  # printf "    Deploying BPMN diagrams from $BPMNS_DIR "
+  printf "    Deploying BPMN diagrams from $BPMNS_DIR "
   # # wait to ensure zeebe-ops pod is running 
   # local zeebe_ops_podname="ph-ee-zeebe-ops"
   # # todo : this is not needed if we are ensuring that the PHEE helm chart is fully up before continuing 
@@ -849,12 +849,13 @@ function deleteApps {
 }
 
 function deployApps {
+  # todo remove this for release 
   # generateMifosXandVNextData # generate MifosX and vNext data if needed
   # # deployBPMS
   # # exit 1 
+  # # exit 1 
+  # vnext_restore_demo_data $CONFIG_DIR "mongodump.gz" $INFRA_NAMESPACE
   # exit 1 
-  vnext_restore_demo_data $CONFIG_DIR "mongodump.gz" $INFRA_NAMESPACE
-  exit 1 
 
   appsToDeploy="$2"
   redeploy="$3"
