@@ -644,10 +644,18 @@ function vnext_restore_demo_data {
   local namespace=$3 
   printf "    restoring vNext mongodb demonstration/test data "
   mongopod=`kubectl get pods --namespace $namespace | grep -i mongodb |awk '{print $1}'` 
-  mongo_root_pw=`kubectl get secret --namespace $namespace  mongodb  -o jsonpath='{.data.mongodb-root-password}'| base64 -d` 
+  mongo_root_pw=`kubectl get secret --namespace $namespace  mongodb  -o jsonpath='{.data.MONGO_INITDB_ROOT_PASSWORD}'| base64 -d` 
+  if [[ -z "$mongo_root_pw" ]]; then
+    echo -e "${RED}   Restore Failed to retrieve MongoDB root password from secret in namespace '$namespace'${RESET}" 
+    return 1
+  fi
   kubectl cp  $mongo_data_dir/$mongo_dump_file $mongopod:/tmp/mongodump.gz  --namespace $namespace  >/dev/null 2>&1 # copy the demo / test data into the mongodb pod
-  kubectl exec --namespace $namespace --stdin --tty  $mongopod -- mongorestore  -u root -p $mongo_root_pw \
-               --gzip --archive=/tmp/mongodump.gz --authenticationDatabase admin  >/dev/null 2>&1  
+  # Execute mongorestore
+  if ! kubectl exec --namespace "$namespace" --stdin --tty "$mongopod" -- mongorestore -u root -p "$mongo_root_pw" \
+      --gzip --archive=/tmp/mongodump.gz --authenticationDatabase admin >/dev/null 2>&1; then
+    echo -e "${RED}   mongorestore command failed ${RESET}" 
+    return 1
+  fi
   printf " [ ok ] \n"
 }
 
@@ -714,7 +722,7 @@ function deployvNext() {
   createNamespace "$VNEXT_NAMESPACE"
   cloneRepo "$VNEXTBRANCH" "$VNEXT_REPO_LINK" "$APPS_DIR" "$VNEXTREPO_DIR"
   # remove the TTK-CLI pod as it is not needed and comes up in error mode 
-  rm  -f "$APPS_DIR/$VNEXTREPO_DIR/packages/installer/manifests/ttk/ttk-cli.yaml" 
+  rm  -f "$APPS_DIR/$VNEXTREPO_DIR/packages/installer/manifests/ttk/ttk-cli.yaml" > /dev/null 2>&1
   
   configurevNext  # make any local mods to manifests
   # original vNext Beta mongo data vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
@@ -845,6 +853,8 @@ function deployApps {
   # # deployBPMS
   # # exit 1 
   # exit 1 
+  vnext_restore_demo_data $CONFIG_DIR "mongodump.gz" $INFRA_NAMESPACE
+  exit 1 
 
   appsToDeploy="$2"
   redeploy="$3"
