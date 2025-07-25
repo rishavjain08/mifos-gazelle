@@ -12,6 +12,9 @@ function welcome {
     echo -e "██    ██ ██   ██  ███    ██      ██      ██      ██      "
     echo -e " ██████  ██   ██ ███████ ███████ ███████ ███████ ███████ "
     echo -e "${RESET}"
+    echo -e "Mifos Gazelle - A PaymentHub EE,  MifosX and ML vNext Beta1 integrated environment"
+    echo -e "Version: $GAZELLE_VERSION"
+    echo 
 }
 function showUsage {
     echo "
