@@ -31,8 +31,9 @@ function isPodRunning() {
         echo "false"
     fi
 }
-
-function isDeployed() {  # Added missing parentheses
+#TODO this really needs to be more robust than just checking namespace and single pod 
+#     existing and running. However it is a quick lkow resource check so leave for now  
+function isDeployed() { 
     local app_name="$1"
     
     if [[ "$app_name" == "infra" ]]; then
@@ -68,8 +69,9 @@ function isDeployed() {  # Added missing parentheses
             echo "false"
             return
         fi
-        # assume if greenbank-backend-0 is running ok then vnext is installed
-        local vnext_podname="greenbank-backend-0"
+        # assume if vnext representative pod is running ok then vnext is installed
+        local vnext_podname
+        vnext_podname=$(kubectl get pods -n "$VNEXT_NAMESPACE" --no-headers -o custom-columns=":metadata.name" | grep -i settlements-api-svc | head -1)
         if [[ "$(isPodRunning "$vnext_podname" "$VNEXT_NAMESPACE")" == "true" ]]; then
             echo "true"
         else
@@ -97,36 +99,36 @@ function isDeployed() {  # Added missing parentheses
     fi
 }
 
-# waitForPodReadyByPartialName() {
-#   local namespace="$1"
-#   local partial_podname="$2"
-#   local max_wait_seconds=300
-#   local sleep_interval=5
-#   local elapsed=0
-#   local podname
+waitForPodReadyByPartialName() {
+  local namespace="$1"
+  local partial_podname="$2"
+  local max_wait_seconds=300
+  local sleep_interval=5
+  local elapsed=0
+  local podname
 
-#   while (( elapsed < max_wait_seconds )); do
-#     podname=$(kubectl get pods -n "$namespace" --no-headers -o custom-columns=":metadata.name" | grep -i "$partial_podname" | head -1)
+  while (( elapsed < max_wait_seconds )); do
+    podname=$(kubectl get pods -n "$namespace" --no-headers -o custom-columns=":metadata.name" | grep -i "$partial_podname" | head -1)
 
-#     if [[ -n "$podname" ]]; then
-#       # Check if pod is Ready (Ready condition == True)
-#       local ready_status
-#       ready_status=$(kubectl get pod "$podname" -n "$namespace" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+    if [[ -n "$podname" ]]; then
+      # Check if pod is Ready (Ready condition == True)
+      local ready_status
+      ready_status=$(kubectl get pod "$podname" -n "$namespace" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
 
-#       if [[ "$ready_status" == "True" ]]; then
-#         echo "$podname"
-#         return 0
-#       fi
-#     fi
+      if [[ "$ready_status" == "True" ]]; then
+        echo "$podname"
+        return 0
+      fi
+    fi
 
-#     echo "⏳ Waiting for pod matching '$partial_podname' to be Ready in namespace '$namespace'... ($elapsed seconds elapsed)"
-#     sleep "$sleep_interval"
-#     ((elapsed+=sleep_interval))
-#   done
+    echo "⏳ Waiting for pod matching '$partial_podname' to be Ready in namespace '$namespace'... ($elapsed seconds elapsed)"
+    sleep "$sleep_interval"
+    ((elapsed+=sleep_interval))
+  done
 
-#   echo -e "${RED}    Error: Pod matching '$partial_podname' did not become Ready within 5 minutes.${RESET}" >&2
-#   return 1
-# }
+  echo -e "${RED}    Error: Pod matching '$partial_podname' did not become Ready within 5 minutes.${RESET}" >&2
+  return 1
+}
 
 
 deployBPMS() {
@@ -135,18 +137,19 @@ deployBPMS() {
   local successful_uploads=0
   local BPMNS_DIR="$BASE_DIR/orchestration/feel"  # BPMNs deployed from  Gazelle but probably eventually belong in ph-ee-env-template 
   local bpms_to_deploy=$(ls -l "$BPMNS_DIR"/*.bpmn | wc -l)
-  # echo "deploying $bpms_to_deploy BPMN diagrams to $host"
+  # TODO remove for release 
+  # # echo "deploying $bpms_to_deploy BPMN diagrams to $host"
   printf "    Deploying BPMN diagrams from $BPMNS_DIR "
-  # wait to ensure zeebe-ops pod is running 
-  local zeebe_ops_podname="ph-ee-zeebe-ops"
-  # todo : this is not needed if we are ensuring that the PHEE helm chart is fully up before continuing 
-  #        in the deploy PH function 
-  # if ! full_podname=$(waitForPodReadyByPartialName "$PH_NAMESPACE" $zeebe_ops_podname ); then
-  #   #echo "    ❌ Pod $zeebe_ops_podname is not ready or not found, skipping BPMN loading."
-  #   return 1
-  # # else
-  # #   echo "    ✅ Found running pod: $full_podname"
-  # fi  
+  # # wait to ensure zeebe-ops pod is running 
+  # local zeebe_ops_podname="ph-ee-zeebe-ops"
+  # # todo : this is not needed if we are ensuring that the PHEE helm chart is fully up before continuing 
+  # #        in the deploy PH function 
+  # # if ! full_podname=$(waitForPodReadyByPartialName "$PH_NAMESPACE" $zeebe_ops_podname ); then
+  # #   #echo "    ❌ Pod $zeebe_ops_podname is not ready or not found, skipping BPMN loading."
+  # #   return 1
+  # # # else
+  # # #   echo "    ✅ Found running pod: $full_podname"
+  # # fi  
 
   # Find each .bpmn file in the specified directories and iterate over them
   for file in "$BPMNS_DIR"/*.bpmn;  do
@@ -641,10 +644,18 @@ function vnext_restore_demo_data {
   local namespace=$3 
   printf "    restoring vNext mongodb demonstration/test data "
   mongopod=`kubectl get pods --namespace $namespace | grep -i mongodb |awk '{print $1}'` 
-  mongo_root_pw=`kubectl get secret --namespace $namespace  mongodb  -o jsonpath='{.data.mongodb-root-password}'| base64 -d` 
+  mongo_root_pw=`kubectl get secret --namespace $namespace  mongodb  -o jsonpath='{.data.MONGO_INITDB_ROOT_PASSWORD}'| base64 -d` 
+  if [[ -z "$mongo_root_pw" ]]; then
+    echo -e "${RED}   Restore Failed to retrieve MongoDB root password from secret in namespace '$namespace'${RESET}" 
+    return 1
+  fi
   kubectl cp  $mongo_data_dir/$mongo_dump_file $mongopod:/tmp/mongodump.gz  --namespace $namespace  >/dev/null 2>&1 # copy the demo / test data into the mongodb pod
-  kubectl exec --namespace $namespace --stdin --tty  $mongopod -- mongorestore  -u root -p $mongo_root_pw \
-               --gzip --archive=/tmp/mongodump.gz --authenticationDatabase admin  >/dev/null 2>&1  
+  # Execute mongorestore
+  if ! kubectl exec --namespace "$namespace" --stdin --tty "$mongopod" -- mongorestore -u root -p "$mongo_root_pw" \
+      --gzip --archive=/tmp/mongodump.gz --authenticationDatabase admin >/dev/null 2>&1; then
+    echo -e "${RED}   mongorestore command failed ${RESET}" 
+    return 1
+  fi
   printf " [ ok ] \n"
 }
 
@@ -711,7 +722,7 @@ function deployvNext() {
   createNamespace "$VNEXT_NAMESPACE"
   cloneRepo "$VNEXTBRANCH" "$VNEXT_REPO_LINK" "$APPS_DIR" "$VNEXTREPO_DIR"
   # remove the TTK-CLI pod as it is not needed and comes up in error mode 
-  rm  -f "$APPS_DIR/$VNEXTREPO_DIR/packages/installer/manifests/ttk/ttk-cli.yaml" 
+  rm  -f "$APPS_DIR/$VNEXTREPO_DIR/packages/installer/manifests/ttk/ttk-cli.yaml" > /dev/null 2>&1
   
   configurevNext  # make any local mods to manifests
   # original vNext Beta mongo data vnext_restore_demo_data $VNEXT_MONGODB_DATA_DIR $INFRA_NAMESPACE
@@ -725,7 +736,9 @@ function deployvNext() {
       echo -e "    Proceeding ..."
     fi
   done
-  vnext_configure_ttk $VNEXT_TTK_FILES_DIR  $VNEXT_NAMESPACE   # configure in the TTKs as participants 
+  ## don't do this by default for gazelle v1.1.0 as for v1.1.0 we now have Mifos greenbank/bluebank as much more realistic DFSPs 
+  ## It is true that in for vNext or subseqent we might want TTKs for debug and testing purposes hence leaving this here for the moment
+  ## vnext_configure_ttk $VNEXT_TTK_FILES_DIR  $VNEXT_NAMESPACE   # configure in the TTKs as participants 
 
   echo -e "\n${GREEN}============================"
   echo -e "vnext Deployed"
@@ -836,7 +849,12 @@ function deleteApps {
 }
 
 function deployApps {
-  # deployBPMS
+  # todo remove this for release 
+  # generateMifosXandVNextData # generate MifosX and vNext data if needed
+  # # deployBPMS
+  # # exit 1 
+  # # exit 1 
+  # vnext_restore_demo_data $CONFIG_DIR "mongodump.gz" $INFRA_NAMESPACE
   # exit 1 
 
   appsToDeploy="$2"

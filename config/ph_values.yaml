@@ -16,7 +16,7 @@ ph-ee-engine:
     enabled: false
 
   operations_web:
-    image: docker.io/openmf/ph-ee-operations-web:dev1 
+    image: docker.io/openmf/ph-ee-operations-web:gazelle-v1.1.0
 
 
 
@@ -115,7 +115,7 @@ ph-ee-engine:
           value: 'false'
       resources:
         requests:
-          cpu: 800m
+          cpu: 200m
           memory: 1200Mi
         limits:
           cpu: 960m
@@ -138,7 +138,7 @@ ph-ee-engine:
 
       resources:
         requests:
-          cpu: 400m
+          cpu: 100m
           memory: 450Mi
         limits:
           cpu: 400m
@@ -159,7 +159,7 @@ ph-ee-engine:
 
       resources:
         requests:
-          cpu: 600m
+          cpu: 300m
           memory: 400Mi
 
           
@@ -254,7 +254,7 @@ ph-ee-engine:
     deployment:
       extraEnvs:
         - name: JAVA_TOOL_OPTIONS
-          value: "-Xms128m -Xmx256m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:9876"
+          value: "-Xms64m -Xmx256m -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError"
 
   connector_bulk:
     enabled: true
