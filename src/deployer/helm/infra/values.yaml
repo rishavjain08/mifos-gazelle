@@ -258,10 +258,10 @@ elasticsearch:
     # Define resources for this single 'all-in-one' master node
     resources:
       requests:
-        memory: "128M"  # Request enough memory for the heap + overhead
+        memory: "128Mi"  # Request enough memory for the heap + overhead
         cpu: "100m"
       limits:
-        memory: "600M" # Allow some buffer over the heap for OS page cache and other overhead
+        memory: "700Mi" # Allow some buffer over the heap for OS page cache and other overhead
         cpu: "200m" # 
 
 
@@ -288,10 +288,10 @@ elasticsearch:
 
     resources:
       requests:
-        memory: "300M"  # Request enough memory for the heap + overhead
+        memory: "300Mi"  # Request enough memory for the heap + overhead
         cpu: "200m"
       limits:
-        memory: "800M" # Allow some buffer over the heap for OS page cache and other overhead
+        memory: "800Mi" # Allow some buffer over the heap for OS page cache and other overhead
         cpu: "200m" # 
     ingress:
       enabled: true
