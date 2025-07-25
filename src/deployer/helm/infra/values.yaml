@@ -291,7 +291,7 @@ elasticsearch:
         memory: "300M"  # Request enough memory for the heap + overhead
         cpu: "200m"
       limits:
-        memory: "500M" # Allow some buffer over the heap for OS page cache and other overhead
+        memory: "800M" # Allow some buffer over the heap for OS page cache and other overhead
         cpu: "200m" # 
     ingress:
       enabled: true
