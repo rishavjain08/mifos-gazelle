@@ -99,36 +99,36 @@ function isDeployed() {
     fi
 }
 
-# waitForPodReadyByPartialName() {
-#   local namespace="$1"
-#   local partial_podname="$2"
-#   local max_wait_seconds=300
-#   local sleep_interval=5
-#   local elapsed=0
-#   local podname
+waitForPodReadyByPartialName() {
+  local namespace="$1"
+  local partial_podname="$2"
+  local max_wait_seconds=300
+  local sleep_interval=5
+  local elapsed=0
+  local podname
 
-#   while (( elapsed < max_wait_seconds )); do
-#     podname=$(kubectl get pods -n "$namespace" --no-headers -o custom-columns=":metadata.name" | grep -i "$partial_podname" | head -1)
+  while (( elapsed < max_wait_seconds )); do
+    podname=$(kubectl get pods -n "$namespace" --no-headers -o custom-columns=":metadata.name" | grep -i "$partial_podname" | head -1)
 
-#     if [[ -n "$podname" ]]; then
-#       # Check if pod is Ready (Ready condition == True)
-#       local ready_status
-#       ready_status=$(kubectl get pod "$podname" -n "$namespace" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+    if [[ -n "$podname" ]]; then
+      # Check if pod is Ready (Ready condition == True)
+      local ready_status
+      ready_status=$(kubectl get pod "$podname" -n "$namespace" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
 
-#       if [[ "$ready_status" == "True" ]]; then
-#         echo "$podname"
-#         return 0
-#       fi
-#     fi
+      if [[ "$ready_status" == "True" ]]; then
+        echo "$podname"
+        return 0
+      fi
+    fi
 
-#     echo "⏳ Waiting for pod matching '$partial_podname' to be Ready in namespace '$namespace'... ($elapsed seconds elapsed)"
-#     sleep "$sleep_interval"
-#     ((elapsed+=sleep_interval))
-#   done
+    echo "⏳ Waiting for pod matching '$partial_podname' to be Ready in namespace '$namespace'... ($elapsed seconds elapsed)"
+    sleep "$sleep_interval"
+    ((elapsed+=sleep_interval))
+  done
 
-#   echo -e "${RED}    Error: Pod matching '$partial_podname' did not become Ready within 5 minutes.${RESET}" >&2
-#   return 1
-# }
+  echo -e "${RED}    Error: Pod matching '$partial_podname' did not become Ready within 5 minutes.${RESET}" >&2
+  return 1
+}
 
 
 deployBPMS() {
