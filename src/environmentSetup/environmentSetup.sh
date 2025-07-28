@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
 function check_arch_ok {
-    if [[ ! "$k8s_arch" == "x86_64" ]]; then
-        printf " **** Warning : mifos-gazelle only works properly with x86_64 today but vNext should be ok *****\n"
+    local arch=$(uname -m)
+    if [[ "$arch" != "x86_64" && "$arch" != "arm64" && "$arch" != "aarch64" ]]; then
+        printf " **** Error: mifos-gazelle only works properly with x86_64, arm64, or aarch64 architectures today  *****\n"
+        exit 1 
     fi
 }
 

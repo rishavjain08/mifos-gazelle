@@ -26,7 +26,6 @@ function isPodRunning() {
     [[ "$pod_status" == "Running" ]]
 }
 
-
 isDeployed() {
     local app_name="$1" namespace="$2" pod_name="$3" full_pod_name
     kubectl get namespace "$namespace" >/dev/null 2>&1 || { echo "false"; return; }
@@ -72,7 +71,6 @@ waitForPodReadyByPartialName() {
   echo -e "${RED}    Error: Pod matching '$partial_podname' did not become Ready within 5 minutes.${RESET}" >&2
   return 1
 }
-
 
 deployBPMS() {
   local host="https://zeebeops.mifos.gazelle.test/zeebe/upload"
@@ -314,7 +312,6 @@ function deployHelmChartFromDir() {
       su - $k8s_user -c "helm install --wait --timeout 600s $release_name $chart_dir -n $namespace "
   fi
 
-  # todo : is the chart really deployed ok, need a test
   # Use kubectl to get the resource count in the specified namespace
   resource_count=$(sudo -u $k8s_user kubectl get pods -n "$namespace" --ignore-not-found=true 2>/dev/null | grep -v "No resources found" | wc -l)
   # Check if the deployment was successful
@@ -674,8 +671,7 @@ function DeployMifosXfromYaml() {
     else
         echo -e "${RED} ERROR: MifosX fineract-server pod failed to become ready within ${timeout_secs} seconds ${RESET}"
         return 1
-    fi
-    
+    fi  
     echo -e "\n${GREEN}====================================="
     echo -e "MifosX (fineract + web app) Deployed"
     echo -e "=====================================${RESET}\n"
@@ -758,14 +754,6 @@ function deleteApps {
 }
 
 function deployApps {
-  # todo remove this for release 
-  # generateMifosXandVNextData # generate MifosX and vNext data if needed
-  # # deployBPMS
-  # # exit 1 
-  # # exit 1 
-  # vnext_restore_demo_data $CONFIG_DIR "mongodump.gz" $INFRA_NAMESPACE
-  # exit 1 
-
   appsToDeploy="$2"
   redeploy="$3"
   echo "redeploy is $redeploy"
