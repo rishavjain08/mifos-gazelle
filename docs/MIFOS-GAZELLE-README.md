@@ -2,7 +2,8 @@
 
 [![Mifos](https://img.shields.io/badge/Mifos-Gazelle-blue)](https://github.com/openMF/mifos-gazelle)
 
-> Deployment utilities for MifosX, Payment Hub EE (PH-EE), and Mojaloop vNext ( December  2024 )
+> Mifos Digital Public Infrastructure as a Solution (DaaS) deployment tool v1.0.0 - July 2025.
+Currently for deploying MifosX, PaymentHub EE and Mojaloop vNext Beta1 on Kubernetes
 
 ## Table of Contents
 - [Goal](#goal-of-mifos-gazelle)
@@ -24,14 +25,14 @@
 
 
 ## Goal of Mifos Gazelle
-The aim of Mifos Gazelle is to provide a trivially simple installation and configuration mechanism for DPGs as part of a DPI construct.  Initially this is focussed on Mifos applications for Core-Banking and Payment Orchestration and the Mojaloop vNext financial transactions switch. The idea is to create a rapidly deployable , understandable and cheap integration to serve as a showcase and a laboratory environment to enable others to build further on these DPI projects. As the project continues we have a roadmap of additional DPGs, demo cases and other features we want to implement, along with looking at how it could be used for production in-cloud and on-premise deployments.
+The aim of Mifos Gazelle is to provide a trivially simple installation and configuration mechanism for Digital Public Goods (DPGs) DaaS construct.  Initially this is focussed on Mifos applications for Core-Banking and Payment Orchestration and the Mojaloop vNext Beta1 financial transactions switch. The idea is to create a rapidly deployable , understandable and cheap integration to serve as a showcase and a laboratory environment to enable others to build further on these DaaS projects. As the project continues we have a roadmap of additional DPGs, demo cases and other features we are actively implementing, along with looking at how it could be used for production in-cloud and on-premise deployments.
 
-IMPORTANT NOTE: As Mifos-Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for v1.0.0. release we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status has not occurred yet.
+IMPORTANT NOTE: As Mifos-Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for v1.1.0. release we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status has not occurred yet.
 
 ## Gazelle features (benefits)
 - Mifos Gazelle installs each or all 3 DPGs in a reliable , repeatable way using simple bash scripts. 
 - The bash scripts are designed to enable developers to understand and modify the configuration of each or all products.
-- Enables installation of all 3 products is quick 15 mins or less with reasonable hardware
+- Enables quick installation of the currrent 3 products, 15 mins or less with capable hardware resources
 Fully functioning MifosX , with the addition of tools to simply add additional tenants
 Fully functioning vNext (beta1) with integrated demo and test environment, admin UI and pre-loaded demo data
 Installed and partially configured PHEE with deployed Web Client(note: see limitations under development status)
@@ -41,13 +42,13 @@ Installed and partially configured PHEE with deployed Web Client(note: see limit
 Before proceeding with the deployment, ensure your system meets the following requirements:
 
 - Ubuntu 22.04 or 24.04 LTS operating systems
-- x86_64 architecture
-- 32GB RAM minimum
+- x86_64 or ARM64 architecture
+- 24 GB RAM minimum
 - 30GB+ free space in home directory
 - Non-root user with sudo privileges
 
 Note regarding memory use : 
-1. If you are installing just MifosX or just vNext then much less memory is required.
+1. It is possible to deploy each product individually and hence possible to use Mifos Gazelle with far less memory if not all products are deployed at once.
 
 ## Quick Start
 logged in as non-root user e.g. mifosu user 
@@ -94,8 +95,13 @@ After the run.sh has finished and ```kubectl get pods -A``` shows all pods and c
   - PaymentHub EE : https://mifos.gitbook.io/docs
 - if you haven't already join the mifos-gazelle channel on the Mifos Slack at https://mifos.slack.com 
 
-## Application Deployment Modes
+## Execute a transfer from Greenbank to Bluebank
+When Mifos Gazelle 1.1.0 is fully installed it is also configured with demonstration data to allow a payment transaction to be initiated by calling paymenthub which then orchestrates the payment flow from the account of a customer in the MifosX Greenbank to the account of a customer in MifosX Bluebank via the vNext beta1 financial transactions switch.  To initiate this transfer use the provided make-payment.sh script. ```./src/utils.make-payment.sh```
 
+
+
+
+## Application Deployment Modes
 Choose specific components to deploy using the `-a` flag:
 
 ```bash
