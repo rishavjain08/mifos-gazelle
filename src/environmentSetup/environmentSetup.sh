@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
 function check_arch_ok {
-    if [[ ! "$k8s_arch" == "x86_64" ]]; then
-        printf " **** Warning : mifos-gazelle only works properly with x86_64 today but vNext should be ok *****\n"
+    local arch=$(uname -m)
+    if [[ "$arch" != "x86_64" && "$arch" != "arm64" && "$arch" != "aarch64" ]]; then
+        printf " **** Error: mifos-gazelle only works properly with x86_64, arm64, or aarch64 architectures today  *****\n"
+        exit 1 
     fi
 }
 
@@ -155,7 +157,7 @@ function add_hosts {
 
     PHEEHOSTS=(  ops.mifos.gazelle.test ops-bk.mifos.gazelle.test \
                  bulk-connector.mifos.gazelle.test messagegateway.mifos.gazelle.test \
-                 minio.mifos.gazelle.test ams-mifos.mifos.gazelle.test \
+                 minio-console.mifos.gazelle.test  \
                  bill-pay.mifos.gazelle.test channel.mifos.gazelle.test \
                  channel-gsma.mifos.gazelle.test crm.mifos.gazelle.test \
                  mockpayment.mifos.gazelle.test mojaloop.mifos.gazelle.test \
@@ -166,7 +168,7 @@ function add_hosts {
 
     MIFOSXHOSTS=( mifos.mifos.gazelle.test fineract.mifos.gazelle.test ) 
 
-    ALLHOSTS=( "127.0.0.1" "localhost" "${PHEEHOSTS[@]}" "${VNEXTHOSTS[@]}"  )
+    ALLHOSTS=( "127.0.0.1" "localhost" "${MIFOSXHOSTS[@]}" "${PHEEHOSTS[@]}" "${VNEXTHOSTS[@]}"  )
 
     export ENDPOINTS=`echo ${ALLHOSTS[*]}`
     # remove any existing extra hosts from 127.0.0.1 entry in localhost 
@@ -396,10 +398,10 @@ function add_helm_repos {
     printf "\r==> add the helm repos required to install and run infrastructure for vNext, Paymenthub EE and MifosX\n"
     su - $k8s_user -c "helm repo add kiwigrid https://kiwigrid.github.io" > /dev/null 2>&1
     su - $k8s_user -c "helm repo add kokuwa https://kokuwaio.github.io/helm-charts" > /dev/null 2>&1  #fluentd
-    su - $k8s_user -c "helm repo add elastic https://helm.elastic.co" > /dev/null 2>&1
+    #su - $k8s_user -c "helm repo add elastic https://helm.elastic.co" > /dev/null 2>&1
     su - $k8s_user -c "helm repo add codecentric https://codecentric.github.io/helm-charts" > /dev/null 2>&1 # keycloak for TTK
     su - $k8s_user -c "helm repo add bitnami https://charts.bitnami.com/bitnami" > /dev/null 2>&1
-    su - $k8s_user -c "helm repo add mojaloop http://mojaloop.io/helm/repo/" > /dev/null 2>&1
+    #su - $k8s_user -c "helm repo add mojaloop http://mojaloop.io/helm/repo/" > /dev/null 2>&1
     su - $k8s_user -c "helm repo add cowboysysop https://cowboysysop.github.io/charts/" > /dev/null 2>&1  # mongo-express
     su - $k8s_user -c "helm repo add redpanda-data https://charts.redpanda.com/ " > /dev/null 2>&1   # kafka console
     su - $k8s_user -c "helm repo update" > /dev/null 2>&1
@@ -416,7 +418,8 @@ function configure_k8s_user_env {
         echo "complete -F __start_kubectl k " >>  $k8s_user_home/.bashrc
         echo "alias ksetns=\"kubectl config set-context --current --namespace\" " >>  $k8s_user_home/.bashrc
         echo "alias ksetuser=\"kubectl config set-context --current --user\" "  >>  $k8s_user_home/.bashrc
-        echo "alias cdml=\"cd $k8s_user_home/mifos-gazelle\" " >>  $k8s_user_home/.bashrc
+        echo "alias cdg=\"cd $k8s_user_home/mifos-gazelle\" " >>  $k8s_user_home/.bashrc
+        echo "export PATH=\$PATH:/usr/local/bin" >> $k8s_user_home/.bashrc
         printf "#GAZELLE_END end of config added by mifos-gazelle #\n" >> $k8s_user_home/.bashrc
     else
         printf "\r==> Configuration for .bashrc for %s for user %s already exists ..skipping\n" "$k8s_distro" "$k8s_user"
@@ -531,13 +534,6 @@ function setup_k8s_cluster {
         fi
 }
 
-# function deleteAppResources(){
-#     deleteResourcesInNamespaceMatchingPattern "$FIN_NAMESPACE"
-#     deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
-#     deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
-#     deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
-#     deleteResourcesInNamespaceMatchingPattern "default"
-# }
 
 ################################################################################
 # MAIN
@@ -546,17 +542,17 @@ function envSetupMain {
     DEFAULT_K8S_DISTRO="k3s"  #only k3s is currently being tested 
     K8S_VERSION=""
 
-    HELM_VERSION="3.12.0"  # Feb 2023
-    OS_VERSIONS_LIST=( 20 22 )
-    K8S_CURRENT_RELEASE_LIST=( "1.29" "1.30" )
+    HELM_VERSION="3.18.4"  # July 2025
+    OS_VERSIONS_LIST=( 22 24 )
+    K8S_CURRENT_RELEASE_LIST=( "1.31" "1.32" ) 
     CURRENT_RELEASE="false"
     k8s_user_home=""
     k8s_arch=`uname -p`  # what arch
     # Set the minimum amount of RAM in GB
-    MIN_RAM=4
+    MIN_RAM=6
     MIN_FREE_SPACE=30
     LINUX_OS_LIST=( "Ubuntu" )
-    UBUNTU_OK_VERSIONS_LIST=(20 22)
+    UBUNTU_OK_VERSIONS_LIST=(22 24)
 
     # ensure we are running as root
     if [ "$EUID" -ne 0 ]
@@ -594,6 +590,7 @@ function envSetupMain {
             install_k8s_tools
             add_helm_repos
             configure_k8s_user_env
+            $UTILS_DIR/install-k9s.sh > /dev/null 2>&1
         else 
             checkHelmandKubectl # ensure things really are in place properly 
         fi

@@ -2,14 +2,12 @@ apiVersion: v2
 description: Helm chart formifos-gazelle infrastructure services
 name: gazelle-infra
 version: 0.1.0
-appVersion: "kafka: 19.0.2; console: 0.6.6; mongodb: 13.3.1; mongo-express: 1.0.2; elasticsearch:19.9.2; redis: 17.11.6"
+appVersion: "kafka: 3.6.0; console: 0.6.6; mongodb: 7.0.2; mongo-express: 1.0.2; elasticsearch:19.9.2; redis: 17.11.6"
 home: https://github.com/openMF/mifos-gazelle
 #icon: 
 sources:
 - https://github.com/openMF/mifos-gazelle
 maintainers:
-- name: Elijah Okello
-  email: elijahokello90@gmail.com
 - name: Tom Daly 
   email: tdaly61@gmail.com
 dependencies:
@@ -17,12 +15,12 @@ dependencies:
 - name: kafka
   alias: kafka
   condition: kafka.enabled
-  repository: https://charts.bitnami.com/bitnami
+  repository: oci://registry-1.docker.io/bitnamicharts
   tags:
   - gazelle
   - dependency
   - kafka
-  version: 19.0.2
+  version: 26.2.0
 ## redpanda kafka console 
 - name: console
   alias: redpanda-console
@@ -38,12 +36,12 @@ dependencies:
 - name: mongodb
   alias: mongodb
   condition: mongodb.enabled
-  repository: https://charts.bitnami.com/bitnami
+  repository: https://groundhog2k.github.io/helm-charts/
   tags:
   - gazelle
   - dependency
   - mongodb
-  version: 13.3.1
+  version: 0.6.0
 ## Mongo-express
 - name: mongo-express
   alias: mongo-express
@@ -68,12 +66,13 @@ dependencies:
 - name: elasticsearch
   alias: elasticsearch
   condition: elasticsearch.enabled
-  repository: https://charts.bitnami.com/bitnami
+  repository: oci://registry-1.docker.io/bitnamicharts
   tags:
-  - gazelle
+  - mojaloop
   - dependency
+  - vNext
   - elasticsearch
-  version: 19.9.2
+  version: 19.13.5
 ## MySQL
 - name: mysql
   alias: mysql

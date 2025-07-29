@@ -11,6 +11,11 @@ Please always contribute to Dev. We then compile accepted PRs from Dev into rele
 
 ## Getting Started
 
+- View the [README](README.MD) to get your development environment up and running.
+- Sign the [Contribution License Agreement](https://mifos.org/about-us/financial-legal/mifos-contributor-agreement/).
+- Always follow the [code of conduct](https://mifos.org/resources/community/code-of-conduct/) - this is important to us. We are proud to be open, tolerant and providing a positive environment.
+- Introduce yourself or ask a question on the [#mifos-gazelle-dev channel on Slack](https://mifos.slack.com/archives/C059L7BQMMH).
+- Find a [Jira](https://mifosforge.jira.com/jira/software/c/projects/GAZ/issues?jql=project%20%3D%20%22GAZ%22%20ORDER%20BY%20created%20DESC) ticket to work on and start smashing!
 - Make sure you have [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) installed on your machine.
 - Fork the repository and clone it locally.
 
