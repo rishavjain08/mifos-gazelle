@@ -1,23 +1,13 @@
 
 ph-ee-engine:
-  # javaOpts:
-  # minHeap: 192m
-  # maxHeap: 256m
-  # debugPort: 5005
-
-  # global: 
-  #   tenants: "greenbank,bluebank"
-  #   DFSPIDS: "greenbank,bluebank" 
-
+  # we use elastic and kibana from the infra namespace 
   elasticsearch:
     enabled: false
-
   kibana:
     enabled: false
 
   operations_web:
     image: docker.io/openmf/ph-ee-operations-web:gazelle-v1.1.0
-
 
 
   # importer_rdbms:
@@ -63,15 +53,6 @@ ph-ee-engine:
 
     zeebe:
       enabled: true
-      # logLevel: debug
-      # volumeClaimTemplate:
-      #   storageClassName: "local-path"
-
-      # # clusterSize: "1"
-      # # partitionCount: "1"
-      # # replicationFactor: "1"
-      # # cpuThreadCount: "1"
-      # ioThreadCount: "1"
       env:
         - name: ZEEBE_BROKER_BACKPRESSURE_ENABLED
           value: "false"
@@ -162,7 +143,6 @@ ph-ee-engine:
           cpu: 300m
           memory: 400Mi
 
-          
       affinity: {}
 
       ingress:
@@ -189,7 +169,6 @@ ph-ee-engine:
     enabled: true
     image: docker.io/openmf/ph-ee-connector-mojaloop-java:gazelle-v1.1.0
     imagePullPolicy: IfNotPresent
-    # image: mojaloop:gazelle1 
     ingress:
       enabled: true
       className: nginx
@@ -198,7 +177,6 @@ ph-ee-engine:
         service: ""
       als:
         host: "http://fspiop-api-svc.vnext.svc.cluster.local:4000"
-        #service: "vnextadmin.mifos.gazelle.test/_interop"
       transfers:
         host: http://fspiop-api-svc.vnext.svc.cluster.local:4000
         service: http://fspiop-api-svc.vnext.svc.cluster.local:4000
@@ -222,16 +200,6 @@ ph-ee-engine:
         - name: parties_1_fspId
           value: "bluebank"
 
-  ph_ee_connector_ams_mifos:
-    enabled: true
-    SPRING_PROFILES_ACTIVE: "fin12,bb"
-    #image: docker.io/openmf/ph-ee-connector-ams-mifos:v1.7.0
-    image: docker.io/devarsh10/ph-ee-connector-ams-mifos:latest
-    # ams_local_interop_host: http://fineract-server.mifosx.svc.cluster.local:8080
-    # ams_local_account_host: http://fineract-server.mifosx.svc.cluster.local:8080
-    # ams_local_customer_host: http://fineract-server.mifosx.svc.cluster.local:8080
-    # ams_local_auth_host: http://fineract-server.mifosx.svc.cluster.local:8080
-
   post_installation_job:
     enabled: false
 
@@ -250,7 +218,7 @@ ph-ee-engine:
     enabled: true
     image: docker.io/openmf/ph-ee-operations-app:v1.17.1-gazelle-1.1.0
     imagePullPolicy: IfNotPresent
-    #image: docker.io/openmf/ph-ee-operations-app:v1.20.0
+
     deployment:
       extraEnvs:
         - name: JAVA_TOOL_OPTIONS
@@ -262,22 +230,10 @@ ph-ee-engine:
     imagePullPolicy: IfNotPresent
     tenants: "greenbank,bluebank"
     operations_app:
-      #contactpoint: "http://ph-ee-operations-app:5000"
       contactpoint: "http://ph-ee-operations-app:80"
       endpoints:
         batch_transaction: "/api/v1/batch/transactions"
-    # spec:
-      # template:
-      #   containers:
-      #     env:
-      #       - name: "BP_JAVA_OPTS"
-      #         value: ""
-      #       - name: "BP_JAVA_OPTS-1"
-      #         value: "fred5"
-      #       - name: "BP_JAVA_OPTS-2"
-      #         value: "fred6"  
-      #       # - name: "TOMS_OPTS"
-      #       #   value: "of-no-value"
+
     deployment:
       extraEnvs:
         - name: JAVA_TOOL_OPTIONS
@@ -330,11 +286,7 @@ ph-ee-engine:
       extraEnvs:
         - name: "SPRING_CONFIG_ADDITIONAL_LOCATION"
           value: "/config/"
-    # application:
-    #   config:
-    #     server:
-    #       ssl:
-    #         enabled: false
+
     LOGGING_LEVEL_ROOT: "DEBUG"
     deployment:
       extraEnvs:
@@ -350,7 +302,6 @@ ph-ee-engine:
       tls:
       - hosts:
         - channel.mifos.gazelle.test
-        # - channel-gsma.mifos.gazelle.test
         secretName: sandbox-secret
       hosts:
         - host: channel.mifos.gazelle.test          
