@@ -75,7 +75,7 @@ git clone --branch dev https://github.com/openMF/mifos-gazelle.git
 cd mifos-gazelle
 
 # Deploy all components (MifosX, vNext, and PH-EE)
-sudo ./run.sh -u $USER -m deploy -d true -a all
+sudo ./run.sh -u $USER -m deploy -a all
 ```
 
 ## Deployment Options
@@ -92,7 +92,7 @@ sudo ./run.sh -u $USER -m deploy -d true -a all
 
 After the run.sh has finished and `kubectl get pods -A` shows all pods and containers running, then Mifos Gazelle has finished installing and is ready for use and testing. Here are some suggestions for what to do next:
 
-- Install the k9s Kubernetes utility using `~/mifos-gazelle/src/utils/install-k9s.sh` then start k9s with `~/local/bin/k9s`
+- Start k9s with `~/local/bin/k9s`
 - Examine the running MifosX database using `~/mifos-gazelle/src/utils/mysql-client-mifos.sh`
 - Examine the running PaymentHub database using `~/mifos-gazelle/src/utils/mysql-client-mifos.sh -h operationsmysql.paymenthub.svc.cluster.local -p ethieTieCh8ahv -u root -d mysql`
 - Access the deployed applications and consoles for MifosX, vNext and PaymentHub EE (see [Accessing Deployed Applications](#accessing-deployed-applications-dpgs)) then browse to http://mifos.mifos.gazelle.test or http://vnextadmin.mifos.gazelle.test or http://ops.mifos.gazelle.test
@@ -246,7 +246,7 @@ Once the new fineract-server pod has finished creating the new schema, you can t
 
 Please note that limitations here are entirely those of the Mifos Gazelle configuration and should not at all be interpreted as issues with the maturity or functionality of the deployed DPGs.
 
-- Currently, PH-EE operations-web UI https://ops.mifos.gazelle.test can access transfers and can create and send batches to bulk. It is not yet clear that the batches are correctly processed on the back end; this, of course, is being worked on
+- Currently, PH-EE operations-web UI https://ops.mifos.gazelle.test can access transfers but bulk transfer processing is being worked on. 
 - ph-ee-integration-test docker image on dockerhub uses the tag v1.6.2-gazelle and corresponds to the v1.6.2-gazelle branch of the v1.6.2 integration-test repo. The helm tests as deployed by Mifos Gazelle report approximately 90% pass rate
 - PaymentHub EE v1.13.0 is being provisioned by Mifos Gazelle and this is set in the config.sh script prior to deployment. This document defines all the sub-chart releases that comprise the v1.13.0 release: https://mifos.gitbook.io/docs/payment-hub-ee/release-notes/v1.13.0
 - There is a lot of tidying up to do once this is better tested (e.g., debug statements to remove and lots of redundant env vars to remove, as well as commented out code to remove)
