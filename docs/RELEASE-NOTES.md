@@ -3,10 +3,18 @@
 ## Major New Features
 
 - **ARM64 Support** - Full support for ARM64 architecture
-- **End-to-End Payment Demonstration** - Complete payment flow from Mifos Tenant Greenbank to Mifos Tenant Bluebank using PHEE, Mifos X, and vNext
+- **End-to-End Payment Demonstration** - Complete payment flow from a customer in a Mifos Tenant (Greenbank)  to a customer in another Mifos Tenant (Bluebank)  using PHEE, Mifos X, and vNext
 - **Enhanced Observability** - Includes Camunda workflows with Camunda Operate
 - **Reduced Memory Utilization** - All components now require less than 24GB memory
+- **Default tenants greenbank and bluebank automatically configured** - for MifosX and PaymentHub EE 
+- **Automatic demonstration data is generated and synchronised** - across all components (see the script in src/utils/data-loading directory)
 
+
+## Noteable changes
+- greenbank and bluebank (testing toolkit endpoints) are no longer automatically deployed, having been replaced by the configured customers and tenants in the Mifos core banking.
+- a number of paymenthub EE components have been moved to SpringBoot 2.6.x and to JDK 17 for improved future maintenance
+- PaymentHub EE dependant libraries e.g. ph-ee-connector-common have been now published to Mifos JFrog Artifactory 
+- helm charts and BPMN diagrams under ph-ee-env-labs helm charts are  no longer used for configuring Paymenthub EE which simplifies depoyment and maintenance. 
 ---
 
 ## MifosX Components
