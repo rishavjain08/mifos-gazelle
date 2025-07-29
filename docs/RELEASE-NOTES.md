@@ -8,6 +8,7 @@
 - **Reduced Memory Utilization** - All components now require less than 24GB memory
 - **Default tenants greenbank and bluebank automatically configured** - for MifosX and PaymentHub EE 
 - **Automatic demonstration data is generated and synchronised** - across all components (see the script in src/utils/data-loading directory)
+- **recent version of the k9s kubernetes utility automatically installed** - in ~/local/bin/k9s 
 
 
 ## Noteable changes

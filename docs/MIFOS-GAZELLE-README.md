@@ -1,4 +1,5 @@
 # Mifos Gazelle Deployment Guide
+(a.k.a Gazelle)
 
 [![Mifos](https://img.shields.io/badge/Mifos-Gazelle-blue)](https://github.com/openMF/mifos-gazelle)
 
@@ -23,7 +24,7 @@ Currently for deploying MifosX, PaymentHub EE and Mojaloop vNext Beta1 on Kubern
     - [Accessing MifosX](#accessing-mifosx)
       - [Host Configuration](#host-configuration)
   - [Helm test](#helm-test)
-  - [Adding tenants to MifosX](#adding-tenants-to-mifosx)
+  - [More detail on adding tenants to MifosX](#more-detail-on-adding-tenants-to-mifosx)
   - [Development Status](#development-status)
   - [Known Issues](#known-issues)
   - [Version information](#version-information)
@@ -32,7 +33,7 @@ Currently for deploying MifosX, PaymentHub EE and Mojaloop vNext Beta1 on Kubern
 ## Goal of Mifos Gazelle
 The aim of Mifos Gazelle is to provide a trivially simple installation and configuration mechanism for Digital Public Goods (DPGs) DaaS construct.  Initially this is focussed on Mifos applications for Core-Banking and Payment Orchestration and the Mojaloop vNext Beta1 financial transactions switch. The idea is to create a rapidly deployable , understandable and cheap integration to serve as a showcase and a laboratory environment to enable others to build further on these DaaS projects. As the project continues we have a roadmap of additional DPGs, demo cases and other features we are actively implementing, along with looking at how it could be used for production in-cloud and on-premise deployments.
 
-IMPORTANT NOTE: As Mifos-Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for v1.1.0. release we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status has not occurred yet.
+IMPORTANT NOTE: As Mifos Gazelle is a deployment tool we make no statements or opinions on the base DPGs in terms of applicability, security etc we recommend all adopters read DPG base documentation to make their own assessment of these. Likewise at the moment for v1.1.0. release we recommend use solely for development, test and demonstration purposes as security assessment and hardening of Mifos Gazelle regardless of the base DPGs status has not occurred yet.
 
 ## Gazelle features (benefits)
 - Mifos Gazelle installs each or all 3 DPGs in a reliable , repeatable way using simple bash scripts. 
@@ -89,7 +90,7 @@ sudo ./run.sh -u $USER -m deploy -d true -a all
 
 
 ## What to do next 
-After the run.sh has finished and ```kubectl get pods -A``` shows all pods and containers running then MifosGazelle has finished installing and is ready for use and testing.  Here are some suggestions for what to do next
+After the run.sh has finished and ```kubectl get pods -A``` shows all pods and containers running then Mifos Gazelle has finished installing and is ready for use and testing.  Here are some suggestions for what to do next
 - Install the k9s kubernetes utility using ``` ~/mifos-gazelle/src/utils/install-k9s.sh ``` then start k9s with ``` ~/local/bin/k9s ```
 - Examine the running MifosX database using ``` ~/mifos-gazelle/src/utils/mysql-client-mifos.sh ```
 - Examine the running PaymentHub database using  ``` ~/mifos-gazelle/src/utils/mysql-client-mifos.sh -h operationsmysql.paymenthub.svc.cluster.local -p ethieTieCh8ahv -u root -d mysql ```
@@ -189,7 +190,7 @@ Once you have added the hosts below for the DPGs you can access consoles with
 
 ```
 ### Accessing MifosX
-By default the Mifos Gazelle installation now loads tenants  "default", "greenbank" and "bluebank" into the database even though greenbank and bluebank are configured into the web client so when logging into Mifos use the default tenant and the default user=mifos and password=password.  See [ Adding tenants to MifosX](#adding-tenants-to-mifosx) for instructions on adding tenants to MifosX database. To change the options for tenants in the web client , modify the FINERACT_PLATFORM_TENANTS_IDENTIFIER in ../src/repos/mifosx/kubernbetes/web-app-deployment.yaml file and redeploy the mifosx app using the Mifos Gazelle run.sh and the -a flag. 
+By default the Mifos Gazelle installation now loads tenants  "default", "greenbank" and "bluebank" When logging into Mifos select one of these tenants and use the default user=mifos and password=password. More tenants can be added is you wish.  See [ Adding tenants to MifosX](#adding-tenants-to-mifosx) for instructions on adding more tenants to MifosX database. To change the options for tenants in the web client , modify the FINERACT_PLATFORM_TENANTS_IDENTIFIER in ../src/repos/mifosx/kubernbetes/web-app-deployment.yaml file and redeploy the mifosx app using the Mifos Gazelle run.sh and the -a flag. 
 
 #### Host Configuration
 
@@ -217,14 +218,14 @@ You can access the results by copying them from the pod to the /tmp directory of
 ~/mifos-gazelle/src/utils/copy-report-from-pod.sh 
 ``` 
 
-## Adding tenants to MifosX 
-By default MifosGazelle deploys MifosX with a single tenant called "default"
-the process to add tenants to a MifosGazelle deployed MifosX deployment is a 2 part process 
-1. modify the example tenant configuration file mifos-gazelle/config/mifos-tenant-config.csv for your chosen tenant names 
+## More detail on adding tenants to MifosX 
+As outlined above by default MifosGazelle deploys MifosX with "default", "greenbank" and "bluebank". 
+The process to add additonal tenants to a MifosGazelle deployed MifosX deployment is a 2 part 
+1. modify the example tenant configuration file mifos-gazelle/config/mifos-tenant-config.csv adding your chosen tenant names 
 2. apply the example tenant configuration to add the new tenants by running (for example) ``` mifos-gazelle/src/utils/utils/update-mifos-tenants.sh -f ./config/mifos-tenant-config.csv ```
 3. in k9s locate and kill the fineract-server process in the MifosX namespace (use ```ctrl-k ``` from k9s) it will automatically be restarted by kubernetes. 
 When fineract-server is restarted the new tenants schemas tables and artefacts will be created. You can check the progress of the schema generation by looking at the fineract-server pod logs.  Still using k9s, again locate the new fineract-server pod and press  ```l``` for logs when that pod is highlighted.  
-4. Once the new fineract-server pod has finished creating the new schema , you can test this by logging in to the MifosX web-client using that tenant. 
+1. Once the new fineract-server pod has finished creating the new schema , you can test this by logging in to the MifosX web-client using that tenant. 
 
 ## Development Status
 Please note that limitations here are entirely those of the Mifos Gazelle configuration, and should not at all be interpreted as issues with the maturity or functionality of the deployed DPGs.  
@@ -237,27 +238,20 @@ Please note that limitations here are entirely those of the Mifos Gazelle config
 - reducing memory usage for demo and test is a high priority project, it is anticipated that the 3 initial DPGs can all run on 16GB or less (i.e. about  50% of the current prerequisite ) 
 - The performance testing is still WIP and not fully operational 
 
-
 ## Known Issues
 - Currently testing is limited to only systems and environments that meet the pre-requisites 
-- Only single instance/node deployment currently supported , there is no reason for this except it is all that is currently tested. 
+- Only single instance/node deployment currently supported , there is no technical reason for this other than it is what is currently tested. 
 - Some cleanup is likely needed (debug statements, redundant environment variables) but as some of this is in use that will happen in future releases
 - PaymentHub EE Kubernetes operator has been developed and will be integrated in future releases
 - Updated Operations web integration pending (pending in PH-EE too - https://github.com/openMF/ph-ee-operations-web/pull/98 and https://github.com/openMF/ph-ee-operations-web/pull/99 )
-- as part of Gazelle development the helm tests databases , tenants etc are being reconfigured and consequently helm tests are likely to report high failure rate 
-- PaymentHub EE integration with vNext and MifosX is not complete (no end-to-end txns yet) => Operations-Web UI is limited in function
-- demonstration data is not currently loaded for MifosX (but this is readily available)
+- PaymentHub EE integration with vNext and MifosX is not complete => Operations-Web UI is limited in function
 - The postman tests provided by the individual DPGs have not yet been fully adapted to the Mifos Gazelle deployment environment, again this will happen in future releases in a structure fashion. 
-- There are some issues on older (Intel/Opteron) hardware with nginx, MongoDB  and ElasticSearch. 
-- Reminder Mifos Gazelle deployment of the 3 DPGs is *not at all secure*. (Note this is true no matter of the security status of the underlying DPGs). Security will necessarily become a major focus as we look to more production ready deployments in future releases. 
+- There are some issues on (much) older (Intel/Opteron) hardware with nginx, MongoDB  and ElasticSearch. 
+- Reminder Mifos Gazelle deployment of the 3 DPGs is *not at all secure*. (Note this is true no matter of the security status of the underlying DPGs). Security will necessarily become a major focus as we look to more production ready deployments in future releases but it is not yet in-place at all.  
 
 ## Version information 
 
-MifosX : i.e. Mifos and Mifos web-client uses docker container openmf/fineract:develop 
-vNext : vNext Beta1 release details see https://github.com/mojaloop/platform-shared-tools/blob/beta1/README.md
-PaymentHub EE : v1.13.0 subcharts and versions as documented at https://mifos.gitbook.io/docs/payment-hub-ee/release-notes/v1.13.0 but with the following exceptions :-
-- ph-ee-env-template : docker.io/openmf/ph-ee-env-template:v1.13.0-gazelle
-- ph-ee-integration-test : docker.io/openmf/ph-ee-integration-test:v1.6.2-gazelle
-- ph-ee-operations-web : docker.io/openmf/openmf/ph-ee-operations-web:dev1
+- [RELEASE-NOTES for v1.1.0](./RELEASE_NOTES.md) - see the release notes for version information
+  
 
 
