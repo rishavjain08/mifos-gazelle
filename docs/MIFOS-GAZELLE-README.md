@@ -95,9 +95,23 @@ After the run.sh has finished and ```kubectl get pods -A``` shows all pods and c
   - PaymentHub EE : https://mifos.gitbook.io/docs
 - if you haven't already join the mifos-gazelle channel on the Mifos Slack at https://mifos.slack.com 
 
-## Execute a transfer from Greenbank to Bluebank
-When Mifos Gazelle 1.1.0 is fully installed it is also configured with demonstration data to allow a payment transaction to be initiated by calling paymenthub which then orchestrates the payment flow from the account of a customer in the MifosX Greenbank to the account of a customer in MifosX Bluebank via the vNext beta1 financial transactions switch.  To initiate this transfer use the provided make-payment.sh script. ```./src/utils.make-payment.sh```
+## Execute a transfer from Greenbank to Bluebank (New in v1.1.0)
+When Mifos Gazelle 1.1.0 is fully installed with all 3 initial DPGs it is also configured with demonstration data to allow a payment transaction to be initiated by calling paymenthub which then orchestrates the payment flow from the account of a customer in the MifosX Greenbank to the account of a customer in MifosX Bluebank via the vNext beta1 financial transactions switch.  To initiate this transfer use the provided make-payment.sh script. ```./src/utils.make-payment.sh```
+Once this payment is succesfully processed you can observe the following
 
+- the BPMN workflow for PayerFundTransfer at https://zeebe-operate.mifos.gazelle.test login is demo/demo. Go to dashboard and click on PayerFundTransfer-greenbank to see the process flow for the transaction. 
+  - It will most likely be completed so make sure to click on "finised instances" if it does not immediately show up.  
+  - Pay attention to the blue line in the diagram as it shows the path the execution took
+
+- Check PaymentHub operations web UI at https://ops.mifos.gazelle.test/ Go to paymenthub -> transfers to see the transfer details 
+
+- Check the payment stages in vNext switch at https://vnextadmin.mifos.gazelle.test/quotes login admin/superMegaPass 
+  - go to quotes -> quotes and click the "quote-id" to get the details for the "quoted" value for the transaction (this is the cusromer amount plus fees and charges etc)
+  - examine the transaction, click transfers -> transfers and then click again on the transfer with the amount you enterered in the make-payment.sh script to bring up the payment details 
+
+- Finally check the customer balances in the MifosX core banking. Login as (payer) greenbank or (payee) bluebank using mifos/password at http://mifos.mifos.gazelle.test/ Go to institution -> clients click on the client.  Scroll down and click on the account no. corresponding to the client.
+  - note that payer clients start with opening balance of $USD 5000 and this is debited with the amount you specified.  
+  - the transaction history is available by clicking -> savings account -> clicking on transactions at the top of the table
 
 
 
@@ -144,7 +158,7 @@ Once you have added the hosts below for the DPGs you can access consoles with
 ### vNext host Configuration
 ```bash
 # Linux/MacOS (/etc/hosts) 
-<VM-IP>  vnextadmin elasticsearch.mifos.gazelle.test kibana.mifos.gazelle.test mongoexpress.mifos.gazelle.test kafkaconsole.mifos.gazelle.test fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test 
+<VM-IP>  vnextadmin elasticsearch.mifos.gazelle.test kibana.mifos.gazelle.test mongoexpress.mifos.gazelle.test kafkaconsole.mifos.gazelle.test fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test redpanda-console.mifos.gazelle.test
 
 # Windows (C:\Windows\System32\drivers\etc\hosts)
 <VM-IP> vnextadmin.mifos.gazelle.test
@@ -155,6 +169,7 @@ Once you have added the hosts below for the DPGs you can access consoles with
 <VM-IP> fspiop.mifos.gazelle.test
 <VM-IP> bluebank.mifos.gazelle.test
 <VM-IP> greenbank.mifos.gazelle.test
+<VM-IP> redpanda-console.mifos.gazelle.test
 ```
 
 ### Payment Hub EE host Configuration
