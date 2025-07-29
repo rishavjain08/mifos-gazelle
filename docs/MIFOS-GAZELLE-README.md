@@ -6,22 +6,27 @@
 Currently for deploying MifosX, PaymentHub EE and Mojaloop vNext Beta1 on Kubernetes
 
 ## Table of Contents
-- [Goal](#goal-of-mifos-gazelle)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Deployment Options](#deployment-options)
-- [Application Deployment Modes](#application-deployment-modes)
-- [Cleanup](#cleanup)
-- [What to do next](#what-to-do-next)
-- [Accessing Deployed Applications](#accessing-deployed-applications-dpgs)
-  - [Mojaloop vNext](#accessing-mojaloop-vnext)
-  - [Payment Hub](#accessing-payment-hub-EE)
-  - [MifosX](#accessing-mifosx)
-- [ Adding tenants to MifosX](#adding-tenants-to-mifosx)
-- [Running helm test](#helm-test)
-- [Development Status](#development-status)
-- [Known Issues](#known-issues)
-- [Version Information](#version-information)
+- [Mifos Gazelle Deployment Guide](#mifos-gazelle-deployment-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Goal of Mifos Gazelle](#goal-of-mifos-gazelle)
+  - [Gazelle features (benefits)](#gazelle-features-benefits)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
+  - [Deployment Options](#deployment-options)
+  - [What to do next](#what-to-do-next)
+  - [Execute a transfer from Greenbank to Bluebank (New in v1.1.0)](#execute-a-transfer-from-greenbank-to-bluebank-new-in-v110)
+  - [Application Deployment Modes](#application-deployment-modes)
+  - [Cleanup](#cleanup)
+  - [Accessing Deployed Applications (DPGs)](#accessing-deployed-applications-dpgs)
+    - [vNext host Configuration](#vnext-host-configuration)
+    - [Payment Hub EE host Configuration](#payment-hub-ee-host-configuration)
+    - [Accessing MifosX](#accessing-mifosx)
+      - [Host Configuration](#host-configuration)
+  - [Helm test](#helm-test)
+  - [Adding tenants to MifosX](#adding-tenants-to-mifosx)
+  - [Development Status](#development-status)
+  - [Known Issues](#known-issues)
+  - [Version information](#version-information)
 
 
 ## Goal of Mifos Gazelle
@@ -113,8 +118,6 @@ Once this payment is succesfully processed you can observe the following
   - note that payer clients start with opening balance of $USD 5000 and this is debited with the amount you specified.  
   - the transaction history is available by clicking -> savings account -> clicking on transactions at the top of the table
 
-
-
 ## Application Deployment Modes
 Choose specific components to deploy using the `-a` flag:
 
@@ -155,6 +158,7 @@ Once you have added the hosts below for the DPGs you can access consoles with
 - PaymentHub EE: http://ops.mifos.gazelle.test 
 
 
+
 ### vNext host Configuration
 ```bash
 # Linux/MacOS (/etc/hosts) 
@@ -185,7 +189,7 @@ Once you have added the hosts below for the DPGs you can access consoles with
 
 ```
 ### Accessing MifosX
-By default the Mifos Gazelle installation only loads the "default" tenant into the database even though greenbank and bluebank are configured into the web client so when logging into Mifos use the default tenant and the default user=mifos and password=password.  See [ Adding tenants to MifosX](#adding-tenants-to-mifosx) for instructions on adding tenants to MifosX database. To change the options for tenants in the web client , modify the FINERACT_PLATFORM_TENANTS_IDENTIFIER in ../src/repos/mifosx/kubernbetes/web-app-deployment.yaml file and redeploy the mifosx app using the Mifos Gazelle run.sh and the -a flag. 
+By default the Mifos Gazelle installation now loads tenants  "default", "greenbank" and "bluebank" into the database even though greenbank and bluebank are configured into the web client so when logging into Mifos use the default tenant and the default user=mifos and password=password.  See [ Adding tenants to MifosX](#adding-tenants-to-mifosx) for instructions on adding tenants to MifosX database. To change the options for tenants in the web client , modify the FINERACT_PLATFORM_TENANTS_IDENTIFIER in ../src/repos/mifosx/kubernbetes/web-app-deployment.yaml file and redeploy the mifosx app using the Mifos Gazelle run.sh and the -a flag. 
 
 #### Host Configuration
 
