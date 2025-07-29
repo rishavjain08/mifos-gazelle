@@ -2,7 +2,7 @@
 
 [![Mifos](https://img.shields.io/badge/Mifos-Gazelle-blue)](https://github.com/openMF/mifos-gazelle)
 
-> Mifos Gazelle is a Mifos Digital Public Infrastructure as a Solution (DaaS) deployment tool v1.0.0 - July 2025.
+> Mifos Gazelle is a Mifos Digital Public Infrastructure as a Solution (DaaS) deployment tool v1.1.0 - July 2025.
 Currently supports deploying MifosX, PaymentHub EE, and Mojaloop vNext Beta1 on Kubernetes.
 
 ## Table of Contents
