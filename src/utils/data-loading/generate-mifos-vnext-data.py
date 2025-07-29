@@ -272,7 +272,8 @@ def create_client(headers, locale, tenant_id):
     # Deterministic name generation
     seed_str = f"{tenant_id}-{count}"
     seed = int(hashlib.sha256(seed_str.encode()).hexdigest(), 16) % (10 ** 8)
-    rng = random.Random(seed)
+    #rng = random.Random(seed)
+    rng = random.Random()
 
     firstname = rng.choice(FIRST_NAMES)
     lastname = rng.choice(LAST_NAMES)
