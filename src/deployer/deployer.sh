@@ -366,7 +366,7 @@ function deployPhHelmChartFromDir(){
   local chartDir="$2"      # Directory containing the Helm chart
   local valuesFile="$3"    # Values file for the Helm chart
   local releaseName="$PH_RELEASE_NAME"
-  local timeout="600s"
+  local timeout="1200s"
 
   # Construct install command
   local helm_cmd="helm install $releaseName $chartDir -n $namespace --wait --timeout $timeout"

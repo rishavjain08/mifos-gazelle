@@ -325,7 +325,9 @@ ph-ee-engine:
     ingress:
       hosts:
         - minio.mifos.gazelle.test
-
+    resources:
+      requests:
+        memory: 128k
     consoleIngress:
       enabled: true 
       ingressClassName: nginx 
