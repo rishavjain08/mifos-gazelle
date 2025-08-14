@@ -138,10 +138,18 @@ ph-ee-engine:
           ROOT: INFO
           io.camunda.operate: DEBUG
 
+      deployment:
+      extraEnv:
+        - name: JAVA_TOOL_OPTIONS
+          value: "-Xms64m -Xmx256m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
+          
       resources:
         requests:
-          cpu: 300m
-          memory: 400Mi
+          cpu: 200m
+          memory: 300Mi
+        limits:
+          cpu: 1
+          memory: 800Mi
 
       affinity: {}
 
@@ -327,7 +335,7 @@ ph-ee-engine:
         - minio.mifos.gazelle.test
     resources:
       requests:
-        memory: 128k
+        memory: 128Mi
     consoleIngress:
       enabled: true 
       ingressClassName: nginx 
