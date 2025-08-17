@@ -35,10 +35,17 @@ ph-ee-engine:
   #       # port: 3306
   #       # schema: "tenants"
 
-  # operations:
-  #   mysql:
-  #     enabled: false
-
+  operations:
+    mysql:
+      enabled: true
+    resources:
+      requests:
+        cpu: 1
+        memory: 100Mi
+      limits:
+        cpu: 2
+        memory: 300Mi
+    
   camunda-platform:
     global:
       elasticsearch:
@@ -344,6 +351,16 @@ ph-ee-engine:
       path: /
       hosts:
         - minio-console.mifos.gazelle.test
+  kafka:
+    enabled: true
+    heapOpts: "-Xms128m -Xmx256m"
+    resources:
+      requests:
+        memory: 500Mi
+        cpu: 200m
+      limits:
+        memory: 1Gi
+        cpu: 500m
 
   ph-ee-connector:
     enabled: true
