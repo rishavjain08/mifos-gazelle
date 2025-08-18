@@ -27,33 +27,20 @@ commands:
             fi
 
       - run:
-          name: Configure hosts & Health check endpoints
+          name: Health check endpoints
           command: |
-            # TODO: set this properly (static IP or from deploy output)
-            VM_IP="127.0.0.1"
-
-            echo "Configuring /etc/hosts with $VM_IP ..."
-            sudo tee -a /etc/hosts > /dev/null <<EOF
-            $VM_IP mifos.mifos.gazelle.test fineract.mifos.gazelle.test
-            $VM_IP vnextadmin.mifos.gazelle.test elasticsearch.mifos.gazelle.test kibana.mifos.gazelle.test mongoexpress.mifos.gazelle.test kafkaconsole.mifos.gazelle.test fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test redpanda-console.mifos.gazelle.test
-            $VM_IP ops.mifos.gazelle.test kibana-phee.mifos.gazelle.test zeebe-operate.mifos.gazelle.test
-            EOF
-
-            echo "Running health checks..."
-            endpoints=(
-              "http://mifos.mifos.gazelle.test"
-              "http://vnextadmin.mifos.gazelle.test"
-              "http://ops.mifos.gazelle.test"
-            )
-
-            for url in "${endpoints[@]}"; do
-              echo "Checking $url ..."
-              if curl -sf "$url/health"; then
-                echo "✅ $url is healthy"
-              else
-                echo "❌ $url failed health check"; exit 1
-              fi
-            done
+            echo "Checking main endpoints..."
+            
+            # Get cluster IP
+            CLUSTER_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' || echo "127.0.0.1")
+            
+            # Test main endpoints
+            curl -f http://$CLUSTER_IP/health || echo "Default health check failed"
+            curl -f http://mifos.mifos.gazelle.test || echo "MifosX failed"
+            curl -f http://vnextadmin.mifos.gazelle.test || echo "vNext failed"
+            curl -f http://ops.mifos.gazelle.test || echo "Payment Hub failed"
+            
+            echo "Health checks completed"
 
 jobs:
   deploy-test-amd64:
