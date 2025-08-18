@@ -26,15 +26,34 @@ commands:
               echo "Failure: Some pods are not ready"; kubectl get pods --all-namespaces; exit 1
             fi
 
-      # - run:
-      #     name: Health check
-      #     command: |
-      #       echo "Running health check..."
-      #       if curl -sf http://localhost:8080/health; then
-      #         echo "Health check passed"
-      #       else
-      #         echo "Health check failed"; exit 1
-      #       fi
+      - run:
+          name: Configure hosts & Health check endpoints
+          command: |
+            # TODO: set this properly (static IP or from deploy output)
+            VM_IP="127.0.0.1"
+
+            echo "Configuring /etc/hosts with $VM_IP ..."
+            sudo tee -a /etc/hosts > /dev/null <<EOF
+            $VM_IP mifos.mifos.gazelle.test fineract.mifos.gazelle.test
+            $VM_IP vnextadmin.mifos.gazelle.test elasticsearch.mifos.gazelle.test kibana.mifos.gazelle.test mongoexpress.mifos.gazelle.test kafkaconsole.mifos.gazelle.test fspiop.mifos.gazelle.test bluebank.mifos.gazelle.test greenbank.mifos.gazelle.test redpanda-console.mifos.gazelle.test
+            $VM_IP ops.mifos.gazelle.test kibana-phee.mifos.gazelle.test zeebe-operate.mifos.gazelle.test
+            EOF
+
+            echo "Running health checks..."
+            endpoints=(
+              "http://mifos.mifos.gazelle.test"
+              "http://vnextadmin.mifos.gazelle.test"
+              "http://ops.mifos.gazelle.test"
+            )
+
+            for url in "${endpoints[@]}"; do
+              echo "Checking $url ..."
+              if curl -sf "$url/health"; then
+                echo "✅ $url is healthy"
+              else
+                echo "❌ $url failed health check"; exit 1
+              fi
+            done
 
 jobs:
   deploy-test-amd64:
