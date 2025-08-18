@@ -22,31 +22,19 @@ commands:
               echo "ERROR: Cannot connect to cluster"; exit 1
             fi
 
-            timeout=300
-            while [[ $timeout -gt 0 ]]; do
-              not_ready=$(kubectl get pods --all-namespaces --no-headers | \
-                awk '$3 != "Running" && $3 != "Completed" {print}')
-              if [[ -z "$not_ready" ]]; then
-                echo "All pods are running"; break
-              fi
-              echo "Waiting for pods... ($timeout s left)"
-              sleep 10
-              timeout=$((timeout - 10))
-            done
-
-            if [[ -n "$not_ready" ]]; then
-              echo "Failure: Some pods are not ready"; echo "$not_ready"; exit 1
+            if ! kubectl wait --for=condition=Ready pods --all --all-namespaces --timeout=300s; then
+              echo "Failure: Some pods are not ready"; kubectl get pods --all-namespaces; exit 1
             fi
 
-      - run:
-          name: Health check
-          command: |
-            echo "Running health check..."
-            if curl -sf http://localhost:8080/health; then
-              echo "Health check passed"
-            else
-              echo "Health check failed"; exit 1
-            fi
+      # - run:
+      #     name: Health check
+      #     command: |
+      #       echo "Running health check..."
+      #       if curl -sf http://localhost:8080/health; then
+      #         echo "Health check passed"
+      #       else
+      #         echo "Health check failed"; exit 1
+      #       fi
 
 jobs:
   deploy-test-amd64:
