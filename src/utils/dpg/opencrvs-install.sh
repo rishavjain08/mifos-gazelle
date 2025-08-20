@@ -99,7 +99,7 @@ helm template -f "$INFRA_DIR/examples/localhost/opencrvs-services/values-dev.yam
 
 
 # --- STEP 7: Final Step Setup ---
-echo "[8/8] === OpenCRVS deployment complete ==="
+echo "[7/7] === OpenCRVS deployment complete ==="
 echo ""
 echo "Login URL: http://login.opencrvs.mifos.gazelle.test/"
 echo "To login as a Field Worker (Social Worker):"
