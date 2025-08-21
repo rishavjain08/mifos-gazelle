@@ -35,7 +35,7 @@ environment="local"
 debug="false"      
 redeploy="true"    
 k8s_distro="k3s"       
-k8s_user_version="1.31"
+k8s_user_version="1.32"
 CONFIG_FILE_PATH="$DEFAULT_CONFIG_FILE"
 
 # Function to load configuration from the INI file using crudini
@@ -82,8 +82,8 @@ function loadConfigFromFile() {
 
     # Override supported global variables from config.ini
     declare -A override_map=(
-        [general]="GAZELLE_DOMAIN"
-        [mysql]="MYSQL_SERVICE_NAME MYSQL_SERVICE_PORT LOCAL_PORT MAX_WAIT_SECONDS MYSQL_HOST" # Dedicated section for MySQL
+        [general]="GAZELLE_DOMAIN GAZELLE_VERSION"
+        [mysql]="MYSQL_SERVICE_NAME MYSQL_SERVICE_PORT LOCAL_PORT MAX_WAIT_SECONDS MYSQL_HOST"
         [infra]="INFRA_NAMESPACE INFRA_RELEASE_NAME"
         [vnext]="VNEXTBRANCH VNEXTREPO_DIR VNEXT_NAMESPACE VNEXT_REPO_LINK"
         [phee]="PHBRANCH PHREPO_DIR PH_NAMESPACE PH_RELEASE_NAME PH_REPO_LINK PH_EE_ENV_TEMPLATE_REPO_LINK PH_EE_ENV_TEMPLATE_REPO_BRANCH PH_EE_ENV_TEMPLATE_REPO_DIR"
@@ -148,7 +148,6 @@ function showUsage {
     -m mode ................ deploy|cleanapps|cleanall  (required)
     -u user ................ (non root) user that the process will use for execution (required)
     -a apps ................ Comma-separated list of apps (vnext,phee,mifosx,infra) or 'all' (optional)
-    -e environment ......... currently, 'local' is the only value supported and is the default (optional)
     -d debug ............... enable debug mode (true|false) (optional default=false)
     -r redeploy ............ force redeployment of apps (true|false) (optional, default=true)
     -h|H ................... display this message
@@ -240,14 +239,13 @@ function getOptions() {
     shift # Shift past the array name argument
 
     OPTIND=1 # Reset getopts index for fresh parsing
-    while getopts "m:k:d:a:e:v:u:r:f:hH" OPTION ; do
+    while getopts "m:k:d:a:v:u:r:f:hH" OPTION ; do
         case "${OPTION}" in
             f) options_map["config_file_path"]="${OPTARG}" ;;
             m) options_map["mode"]="${OPTARG}" ;;
             k) options_map["k8s_distro"]="${OPTARG}" ;;
             d) options_map["debug"]="${OPTARG}" ;;
-            a) options_map["apps"]="${OPTARG}" ;; # Capture as is, will convert later
-            e) options_map["environment"]="${OPTARG}" ;;
+            a) options_map["apps"]="${OPTARG}" ;; 
             v) options_map["k8s_user_version"]="${OPTARG}" ;;
             u) options_map["k8s_user"]="${OPTARG}" ;;
             r) options_map["redeploy"]="${OPTARG}" ;;
@@ -269,7 +267,7 @@ function cleanUp ()
 
     mode="cleanup"
     echo "exiting via cleanUp function" 
-    #envSetupMain "$mode" "k3s" "1.26" "$environment"
+    #envSetupMain "$mode" "k3s" "1.32" "$environment"
 
     # exit shell script with error code 2
     # if omitted, shell script will continue execution
@@ -319,7 +317,6 @@ function main {
         apps=$(echo "${cmd_args_map["apps"]}" | tr ',' ' ')
         logWithLevel "$INFO" "CLI apps converted to space-separated: $apps"
     fi
-    if [[ -n "${cmd_args_map["environment"]}" ]]; then environment="${cmd_args_map["environment"]}"; fi
     if [[ -n "${cmd_args_map["debug"]}" ]]; then debug="${cmd_args_map["debug"]}"; fi
     if [[ -n "${cmd_args_map["redeploy"]}" ]]; then redeploy="${cmd_args_map["redeploy"]}"; fi
     if [[ -n "${cmd_args_map["k8s_distro"]}" ]]; then k8s_distro="${cmd_args_map["k8s_distro"]}"; fi

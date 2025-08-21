@@ -695,6 +695,7 @@ function generateMifosXandVNextData {
   fi
 }
 
+
 function test_vnext {
   echo "TODO" #TODO Write function to test apps
 }
@@ -721,8 +722,7 @@ function printEndMessage {
 # INFO: Updated function
 function deleteApps {
   # appsToDelete will be a space-separated string (e.g., "vnext mifosx", "all", "infra")
-  local mifosx_instances="$1" # This parameter seems unused in the original code, retaining for signature consistency
-  local appsToDelete="$2"
+  appsToDelete="$2"
 
   if [[ "$appsToDelete" == "all" ]]; then
     echo "Deleting all applications and related resources."
@@ -738,23 +738,22 @@ function deleteApps {
     echo "Deleting specific applications: $appsToDelete"
     for app in $appsToDelete; do
       case "$app" in
-        "mifosx")
-          deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
-          ;;
         "vnext")
           deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
           ;;
+        "mifosx")
+          deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
+          ;;
         "phee")
           deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
-          # Specific cleanup for PHEE related chart files and Prometheus
-          rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz"
-          rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz"
+          rm -f $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz
+          rm -f $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz
           echo "Handling Prometheus Operator resources in the default namespace as part of PHEE cleanup"
           LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
           su - "$k8s_user" -c "curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/${LATEST}/bundle.yaml | kubectl -n default delete -f -" > /dev/null 2>&1
           if [ $? -ne 0 ]; then
             echo "Warning: there was an issue uninstalling  Prometheus Operator resources in default namespace."
-            echo "         you can ignore this if Prometheus was not expected to be already running."
+            echo "         You can ignore this if Prometheus was not expected to be already running."
           fi
           ;;
         "infra")
@@ -762,7 +761,8 @@ function deleteApps {
           ;;
         *)
           echo -e "${RED}Invalid app '$app' for deletion. This should have been caught by validateInputs.${RESET}"
-          # No exit here, as we want to try deleting other valid apps if specified in a list
+          showUsage
+          exit 
           ;;
       esac
     done
@@ -771,61 +771,57 @@ function deleteApps {
 
 # INFO: Updated function
 function deployApps {
+  # appsToDeploy will be a space-separated string, e.g., "vnext mifosx", "infra", "all"
   appsToDeploy="$2"
   redeploy="$3"
   echo "redeploy is $redeploy"
+
   echo -e "${BLUE}Starting deployment for applications: $appsToDeploy...${RESET}"
 
-  # Process each application in the space-separated list
-  for app in $appsToDeploy; do
-    echo -e "${BLUE}--- Deploying '$app' ---${RESET}"
-    case "$app" in
-      "infra")
-        deployInfrastructure "$redeploy"
-        ;;
-      "vnext")
-        deployInfrastructure "false" # Deploy infra if not already
-        deployvNext
-        ;;
-      "mifosx")
-        # Preserve the specific redeploy logic for mifosx
-        if [[ "$(isDeployed "mifosx" )" == "true" ]]; then
-          if [[ "$redeploy" == "true" ]]; then
+  # Special handling for 'all' as a block-deploy, matching the repo
+  if [[ "$appsToDeploy" == "all" ]]; then
+    echo -e "${BLUE}Deploying all apps ...${RESET}"
+    deployInfrastructure "$redeploy"
+    deployvNext
+    deployPH
+    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"
+    deployBPMS
+    generateMifosXandVNextData
+  else
+    # Process each application in the space-separated list
+    for app in $appsToDeploy; do
+      echo -e "${BLUE}--- Deploying '$app' ---${RESET}"
+      case "$app" in
+        "infra")
+          deployInfrastructure
+          ;;
+        "vnext")
+          deployInfrastructure "false"
+          deployvNext
+          ;;
+        "mifosx")
+          if [[ "$redeploy" == "true" ]]; then 
             echo "removing current mifosx and redeploying"
             deleteApps 1 "mifosx"
-          else
-            echo "MifosX is already deployed and redeploy is false. Skipping deployment."
-            continue # Skip to next app in the loop
-          fi
-        fi
-        deployInfrastructure "false" # Deploy infra if not already
-        DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"
-        # here we need to add the second tenant to the mysql database 
-        # this is how to check to see how many rows are in a schema 
-        # can use this to determine when mifos has finished creating tables 
-        # 249 seems to be the magic number for fineract_default schema for openmf/fineract:develop 
-        # kubectl run mysql-client --rm -it --image=mysql:5.6 --restart=Never -- mysql -h mysql.infra.svc.cluster.local -u root -pmysqlpw \
-        #   -B -e 'SELECT count(*) AS TOTALNUMBEROFTABLES FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "fineract_default" '
-        # kubectl -n $INFRA_NAMESPACE cp $CONFIG_DIR/mifos-multi-tenant.sql mysql-0:/tmp
-        # kubectl -n $INFRA_NAMESPACE exec mysql-0 
-        # TODO: add the automation above BUT for now use 
-        #       src/utils/update-mifos-tenants.sh and do this after run.sh has completed and pods are up
-        #       NOTE: the reason I am hesitating to add this now i.e. v1.0.0 is the time it takes then for the fineract-server pod to come online 
-        #             I need to see what the perf hit is *also* I am thinking we should simply export/import the mysql database 
-        #             as part of the infra startup
-        ;;
-      "phee")
-        deployInfrastructure "false" # Deploy infra if not already
-        deployPH
-        ;;
-      *)
-        echo -e "${RED}Error: Unknown application '$app' in deployment list. This should have been caught by validation.${RESET}"
-        showUsage
-        exit 1
-        ;;
-    esac
-    echo -e "${BLUE}--- Finished deploying '$app' ---${RESET}\n"
-  done
+          fi 
+          deployInfrastructure "false"
+          DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
+          generateMifosXandVNextData
+          ;;
+        "phee")
+          deployInfrastructure "false"
+          deployPH
+          ;;
+        *)
+          echo -e "${RED}Error: Unknown application '$app' in deployment list. This should have been caught by validation.${RESET}"
+          showUsage
+          exit 1
+          ;;
+      esac
+      echo -e "${BLUE}--- Finished deploying '$app' ---${RESET}\n"
+    done
+  fi
+
   addKubeConfig >> /dev/null 2>&1
   printEndMessage
 }
