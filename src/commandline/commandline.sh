@@ -124,6 +124,10 @@ function welcome {
     echo -e "██    ██ ██   ██  ███    ██      ██      ██      ██      "
     echo -e " ██████  ██   ██ ███████ ███████ ███████ ███████ ███████ "
     echo -e "${RESET}"
+    echo -e "Mifos Gazelle - a Mifos Digital Public Infrastructure as a Solution (DaaS) deployment tool."
+    echo -e "                deploying MifosX, PaymentHub EE and vNext on Kubernetes."
+    echo -e "Version: $GAZELLE_VERSION"
+    echo 
 }
 
 # INFO: Script Updation starts from here
@@ -264,8 +268,8 @@ function cleanUp ()
     echo -e "${RED}Performing graceful clean up${RESET}"
 
     mode="cleanup"
-    echo "Doing cleanup"
-    envSetupMain "$mode" "k3s" "1.31" "$environment"
+    echo "exiting via cleanUp function" 
+    #envSetupMain "$mode" "k3s" "1.26" "$environment"
 
     # exit shell script with error code 2
     # if omitted, shell script will continue execution
