@@ -695,6 +695,7 @@ function generateMifosXandVNextData {
   fi
 }
 
+
 function test_vnext {
   echo "TODO" #TODO Write function to test apps
 }
@@ -718,9 +719,13 @@ function printEndMessage {
   echo -e "or install k9s by executing ./src/utils/install-k9s.sh <cr> in this terminal window\n\n"
 }
 
+# INFO: Updated function
 function deleteApps {
+  # appsToDelete will be a space-separated string (e.g., "vnext mifosx", "all", "infra")
   appsToDelete="$2"
+
   if [[ "$appsToDelete" == "all" ]]; then
+    echo "Deleting all applications and related resources."
     deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
@@ -728,65 +733,95 @@ function deleteApps {
     rm -f "$APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz"
     deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
     deleteResourcesInNamespaceMatchingPattern "default"
-  elif [[ "$appsToDelete" == "vnext" ]];then
-    deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
-  elif [[ "$appsToDelete" == "mifosx" ]]; then 
-    deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
-  elif [[ "$appsToDelete" == "phee" ]]; then
-    deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
-    rm  $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz
-    rm  $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz
-    echo "Handling Prometheus Operator resources in the default namespace"
-    LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
-    su - "$k8s_user" -c "curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/${LATEST}/bundle.yaml | kubectl -n default delete -f -" > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        echo "Warning: there was an issue uninstalling  Prometheus Operator resources in default namespace."
-        echo "         you can ignore this if Prometheus was not expected to be already running."
-    fi
-
-  elif [[ "$appsToDelete" == "infra" ]]; then
-    deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
-  else 
-    echo -e "${RED}Invalid -a option ${RESET}"
-    showUsage
-    exit 
-  fi  
+  else
+    # Iterate over each application in the space-separated list
+    echo "Deleting specific applications: $appsToDelete"
+    for app in $appsToDelete; do
+      case "$app" in
+        "vnext")
+          deleteResourcesInNamespaceMatchingPattern "$VNEXT_NAMESPACE"
+          ;;
+        "mifosx")
+          deleteResourcesInNamespaceMatchingPattern "$MIFOSX_NAMESPACE"
+          ;;
+        "phee")
+          deleteResourcesInNamespaceMatchingPattern "$PH_NAMESPACE"
+          rm -f $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/ph-ee-engine/charts/*tgz
+          rm -f $APPS_DIR/$PH_EE_ENV_TEMPLATE_REPO_DIR/helm/gazelle/charts/*tgz
+          echo "Handling Prometheus Operator resources in the default namespace as part of PHEE cleanup"
+          LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
+          su - "$k8s_user" -c "curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/${LATEST}/bundle.yaml | kubectl -n default delete -f -" > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Warning: there was an issue uninstalling  Prometheus Operator resources in default namespace."
+            echo "         You can ignore this if Prometheus was not expected to be already running."
+          fi
+          ;;
+        "infra")
+          deleteResourcesInNamespaceMatchingPattern "$INFRA_NAMESPACE"
+          ;;
+        *)
+          echo -e "${RED}Invalid app '$app' for deletion. This should have been caught by validateInputs.${RESET}"
+          showUsage
+          exit 
+          ;;
+      esac
+    done
+  fi
 }
 
+# INFO: Updated function
 function deployApps {
+  # appsToDeploy will be a space-separated string, e.g., "vnext mifosx", "infra", "all"
   appsToDeploy="$2"
   redeploy="$3"
   echo "redeploy is $redeploy"
 
+  echo -e "${BLUE}Starting deployment for applications: $appsToDeploy...${RESET}"
+
+  # Special handling for 'all' as a block-deploy, matching the repo
   if [[ "$appsToDeploy" == "all" ]]; then
     echo -e "${BLUE}Deploying all apps ...${RESET}"
-    deployInfrastructure "$redeploy" 
+    deployInfrastructure "$redeploy"
     deployvNext
     deployPH
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
+    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR"
     deployBPMS
     generateMifosXandVNextData
-  elif [[ "$appsToDeploy" == "infra" ]];then
-    deployInfrastructure
-  elif [[ "$appsToDeploy" == "vnext" ]];then
-    deployInfrastructure "false"
-    deployvNext
-  elif [[ "$appsToDeploy" == "mifosx" ]]; then 
-    if [[ "$redeploy" == "true" ]]; then 
-      echo "removing current mifosx and redeploying"
-      deleteApps 1 "mifosx"
-    fi 
-    deployInfrastructure "false"
-    DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
-    generateMifosXandVNextData
-  elif [[ "$appsToDeploy" == "phee" ]]; then
-    deployInfrastructure "false"
-    deployPH
-  else 
-    echo -e "${RED}Invalid option ${RESET}"
-    showUsage
-    exit 
+  else
+    # Process each application in the space-separated list
+    for app in $appsToDeploy; do
+      echo -e "${BLUE}--- Deploying '$app' ---${RESET}"
+      case "$app" in
+        "infra")
+          deployInfrastructure
+          ;;
+        "vnext")
+          deployInfrastructure "false"
+          deployvNext
+          ;;
+        "mifosx")
+          if [[ "$redeploy" == "true" ]]; then 
+            echo "removing current mifosx and redeploying"
+            deleteApps 1 "mifosx"
+          fi 
+          deployInfrastructure "false"
+          DeployMifosXfromYaml "$MIFOSX_MANIFESTS_DIR" 
+          generateMifosXandVNextData
+          ;;
+        "phee")
+          deployInfrastructure "false"
+          deployPH
+          ;;
+        *)
+          echo -e "${RED}Error: Unknown application '$app' in deployment list. This should have been caught by validation.${RESET}"
+          showUsage
+          exit 1
+          ;;
+      esac
+      echo -e "${BLUE}--- Finished deploying '$app' ---${RESET}\n"
+    done
   fi
+
   addKubeConfig >> /dev/null 2>&1
   printEndMessage
 }
